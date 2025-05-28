@@ -1,0 +1,2856 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Music API Documentation",
+    "description": "MUSIC API course for egghead",
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    },
+    "version": "2.0.0"
+  },
+  "host": "polar-plateau-87434.herokuapp.com",
+  "basePath": "/api",
+  "tags": [
+    {
+      "name": "Songs",
+      "description": "API for Songs Endpoints"
+    },
+    {
+      "name": "Users",
+      "description": "API for Users Endpoints"
+    },
+    {
+      "name": "PlayLists",
+      "description": "API for Playlist Endpoints"
+    },
+    {
+      "name": "Category",
+      "description": "API for Category Endpoints"
+    },
+    {
+      "name": "District",
+      "description": "API for District Endpoints"
+    },
+    {
+      "name": "Faqs",
+      "description": "API for Faqs Endpoints"
+    },
+    {
+      "name": "Roles",
+      "description": "API for Roles Endpoints"
+    },
+    {
+      "name": "Service",
+      "description": "API for Service Endpoints"
+    },
+    {
+      "name": "StatusRequest",
+      "description": "API for StatusRequest Endpoints"
+    },
+    {
+      "name": "Citizen",
+      "description": "API for Citizen Endpoints"
+    },
+    {
+      "name": "CitizenComment",
+      "description": "API for CitizenComment Endpoints"
+    },
+    {
+      "name": "CitizenRate",
+      "description": "API for CitizenRate Endpoints"
+    },
+    {
+      "name": "Request",
+      "description": "API for Request Endpoints"
+    }
+
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/users/signup": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "API Endpoint for create User",
+        "description": "Create new User in database",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "user",
+            "description": "User params to regitser new user",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "New user has Created",
+            "schema": {
+              "$ref": "#/definitions/SignupRsp"
+            }
+          }
+        }
+      }
+    },
+    "/users/login": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "API Endpoint to login his/her account",
+        "description": "Login user",
+        "parameters": [
+          {
+            "name": "user",
+            "description": "User params to login",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserLogin"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "New user has loggedIn",
+            "schema": {
+              "$ref": "#/definitions/UserLoginRsp"
+            }
+          }
+        }
+      }
+    },
+    "/songs": {
+      "post": {
+        "tags": [
+          "Songs"
+        ],
+        "summary": "API Endpoint for create Song",
+        "description": "Create new Song in database",
+        "parameters": [
+          {
+            "name": "song",
+            "description": "Song params to create new song",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Song"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "New Song Created",
+            "schema": {
+              "$ref": "#/definitions/Song"
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Songs"
+        ],
+        "summary": "API Endpoint to find all Song",
+        "description": "Find all Songs from the database",
+        "parameters": [
+          {
+            "name": "page",
+            "type": "integer",
+            "description": "Define the page index for the records",
+            "in": "query"
+          },
+          {
+            "name": "limit",
+            "type": "integer",
+            "description": "Define the limiet for the records i.e 10",
+            "in": "query"
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "All the songs",
+            "schema": {
+              "$ref": "#/definitions/Songs"
+            }
+          }
+        }
+      }
+    },
+    "/songs/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "id of the song",
+          "type": "string"
+        },
+        {
+          "name": "authorization",
+          "description": "Access token to authorize the user",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "tags": [
+          "Songs"
+        ],
+        "summary": "API Endpoint to find single Song",
+        "description": "Find one from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Song has found",
+            "schema": {
+              "$ref": "#/definitions/Song"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Songs"
+        ],
+        "summary": "API Endpoint to delete the Song",
+        "description": "Delete song from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Song has deleted",
+            "schema": {
+              "$ref": "#/definitions/Song"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Songs"
+        ],
+        "summary": "API Endpoint for update Song",
+        "description": "Update the existing Song in database",
+        "parameters": [
+          {
+            "name": "song",
+            "description": "Song params to update the song",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateSong"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Song has Updated",
+            "schema": {
+              "$ref": "#/definitions/Song"
+            }
+          }
+        }
+      }
+    },
+    "/playlist": {
+      "post": {
+        "tags": [
+          "PlayLists"
+        ],
+        "summary": "Create a new PlayList",
+        "description": "Add new songs in the PlayList",
+        "parameters": [
+          {
+            "name": "playlist",
+            "description": "Songs that user want to add in the PlayList",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PlayList"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "new PlayList is created",
+            "schema": {
+              "$ref": "#/definitions/PlayList"
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "PlayLists"
+        ],
+        "summary": "Find all the PlayList with Songs",
+        "description": "View all the Songs in the PlayList",
+        "parameters": [
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "View all the PlayList",
+            "schema": {
+              "type": "array",
+              "$ref": "#/definitions/PlayLists"
+            }
+          }
+        }
+      }
+    },
+    "/category":{
+      "post": {
+        "tags": [
+          "Category"
+        ],
+        "summary": "Create a new Category",
+        "description": "Add new category",
+        "parameters": [
+          {
+            "name": "category",
+            "description": "add new category",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Category"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "new category is created",
+            "schema": {
+              "$ref": "#/definitions/CategoryRes"
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Category"
+        ],
+        "summary": "Find all the Category",
+        "description": "View all the category",
+        "parameters": [
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "View all the Categogy",
+            "schema": {
+              "type": "object",
+              "$ref": "#/definitions/CategogyAllRes"
+            }
+          }
+        }
+      }
+    },
+    "/category/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "id of the category",
+          "type": "string"
+        },
+        {
+          "name": "authorization",
+          "description": "Access token to authorize the user",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "tags": [
+          "Category"
+        ],
+        "summary": "API Endpoint to find a category",
+        "description": "Find one from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Category has found",
+            "schema": {
+              "$ref": "#/definitions/CategoryRes"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Category"
+        ],
+        "summary": "API Endpoint to delete the Category",
+        "description": "Delete Category from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Category has deleted",
+            "schema": {
+              "$ref": "#/definitions/CategoryRes"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Category"
+      ],
+        "summary": "API Endpoint for update Category",
+        "description": "Update the existing Category in database",
+        "parameters": [
+          {
+            "name": "Category",
+            "description": "params to update the Category",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Category"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Category has Updated",
+            "schema": {
+              "$ref": "#/definitions/CategoryRes"
+            }
+          }
+        }
+      }
+    },
+    "/district":{
+      "post": {
+        "tags": [
+          "District"
+        ],
+        "summary": "Create a new District",
+        "description": "Add new district",
+        "parameters": [
+          {
+            "name": "district",
+            "description": "add new District",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/District"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "new district is created",
+            "schema": {
+              "$ref": "#/definitions/DistrictRes"
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "District"
+        ],
+        "summary": "Find all the District",
+        "description": "View all the District",
+        "parameters": [
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "View all the District",
+            "schema": {
+              "type": "object",
+              "$ref": "#/definitions/DistrictAllRes"
+            }
+          }
+        }
+      }
+    },
+    "/district/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "id of the district",
+          "type": "string"
+        },
+        {
+          "name": "authorization",
+          "description": "Access token to authorize the user",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "tags": [
+          "District"
+        ],
+        "summary": "API Endpoint to find a district",
+        "description": "Find one from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "District has found",
+            "schema": {
+              "$ref": "#/definitions/DistrictRes"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "District"
+        ],
+        "summary": "API Endpoint to delete the District",
+        "description": "Delete District from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "District has deleted",
+            "schema": {
+              "$ref": "#/definitions/DistrictRes"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "District"
+        ],
+        "summary": "API Endpoint for update District",
+        "description": "Update the existing District in database",
+        "parameters": [
+          {
+            "name": "District",
+            "description": "params to update the District",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/District"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "District has Updated",
+            "schema": {
+              "$ref": "#/definitions/DistrictRes"
+            }
+          }
+        }
+      }
+    },
+    "/faqs":{
+      "post": {
+        "tags": [
+          "Faqs"
+        ],
+        "summary": "Create a new Faqs",
+        "description": "Add new Faqs",
+        "parameters": [
+          {
+            "name": "Faqs",
+            "description": "add new Faqs",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Faqs"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "new Faqs is created",
+            "schema": {
+              "$ref": "#/definitions/FaqsRes"
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Faqs"
+        ],
+        "summary": "Find all the Faqs",
+        "description": "View all the Faqs",
+        "parameters": [
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "View all the Faqs",
+            "schema": {
+              "type": "object",
+              "$ref": "#/definitions/FaqsAllRes"
+            }
+          }
+        }
+      }
+    },
+    "/faqs/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "id of the faqs",
+          "type": "string"
+        },
+        {
+          "name": "authorization",
+          "description": "Access token to authorize the user",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "tags": [
+          "Faqs"
+        ],
+        "summary": "API Endpoint to find a faqs",
+        "description": "Find one from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Faqs has found",
+            "schema": {
+              "$ref": "#/definitions/FaqsRes"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Faqs"
+        ],
+        "summary": "API Endpoint to delete the Faqs",
+        "description": "Delete faqs from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Faqs has deleted",
+            "schema": {
+              "$ref": "#/definitions/FaqsRes"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Faqs"
+        ],
+        "summary": "API Endpoint for update Faqs",
+        "description": "Update the existing Faqs in database",
+        "parameters": [
+          {
+            "name": "Faqs",
+            "description": "params to update the Faqs",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Faqs"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Faqs has Updated",
+            "schema": {
+              "$ref": "#/definitions/FaqsRes"
+            }
+          }
+        }
+      }
+    },
+    "/roles":{
+      "post": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Create a new Roles",
+        "description": "Add new Roles",
+        "parameters": [
+          {
+            "name": "Roles",
+            "description": "add new Roles",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Roles"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "new category is created",
+            "schema": {
+              "$ref": "#/definitions/RolesRes"
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Find all the Roles",
+        "description": "View all the Roles",
+        "parameters": [
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "View all the Roles",
+            "schema": {
+              "type": "object",
+              "$ref": "#/definitions/RolesAllRes"
+            }
+          }
+        }
+      }
+    },
+    "/roles/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "id of the roles",
+          "type": "string"
+        },
+        {
+          "name": "authorization",
+          "description": "Access token to authorize the user",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "API Endpoint to find a roles",
+        "description": "Find one from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Roles has found",
+            "schema": {
+              "$ref": "#/definitions/RolesRes"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "API Endpoint to delete the Roles",
+        "description": "Delete Roles from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Roles has deleted",
+            "schema": {
+              "$ref": "#/definitions/RolesRes"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "API Endpoint for update Roles",
+        "description": "Update the existing Roles in database",
+        "parameters": [
+          {
+            "name": "Roles",
+            "description": "params to update the Roles",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Roles"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Roles has Updated",
+            "schema": {
+              "$ref": "#/definitions/RolesRes"
+            }
+          }
+        }
+      }
+    },
+    "/service":{
+      "post": {
+        "tags": [
+          "Service"
+        ],
+        "summary": "Create a new Service",
+        "description": "Add new Service",
+        "parameters": [
+          {
+            "name": "Service",
+            "description": "add new Service",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Service"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "new Service is created",
+            "schema": {
+              "$ref": "#/definitions/ServiceRes"
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Service"
+        ],
+        "summary": "Find all the Service",
+        "description": "View all the Service",
+        "parameters": [
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "View all the Service",
+            "schema": {
+              "type": "object",
+              "$ref": "#/definitions/ServiceAllRes"
+            }
+          }
+        }
+      }
+    },
+    "/service/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "id of the service",
+          "type": "string"
+        },
+        {
+          "name": "authorization",
+          "description": "Access token to authorize the user",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "tags": [
+          "Service"
+        ],
+        "summary": "API Endpoint to find a service",
+        "description": "Find one from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Service has found",
+            "schema": {
+              "$ref": "#/definitions/ServiceRes"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Service"
+        ],
+        "summary": "API Endpoint to delete the Service",
+        "description": "Delete service from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Service has deleted",
+            "schema": {
+              "$ref": "#/definitions/ServiceRes"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Service"
+        ],
+        "summary": "API Endpoint for update Service",
+        "description": "Update the existing Service in database",
+        "parameters": [
+          {
+            "name": "Service",
+            "description": "params to update the Service",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Service"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Service has Updated",
+            "schema": {
+              "$ref": "#/definitions/ServiceRes"
+            }
+          }
+        }
+      }
+    },
+    "/StatusRequest":{
+      "post": {
+        "tags": [
+          "StatusRequest"
+        ],
+        "summary": "Create a new StatusRequest",
+        "description": "Add new StatusRequest",
+        "parameters": [
+          {
+            "name": "StatusRequest",
+            "description": "add new StatusRequest",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StatusRequest"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "new district is created",
+            "schema": {
+              "$ref": "#/definitions/StatusRequestRes"
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "StatusRequest"
+        ],
+        "summary": "Find all the StatusRequest",
+        "description": "View all the StatusRequest",
+        "parameters": [
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "View all the StatusRequest",
+            "schema": {
+              "type": "object",
+              "$ref": "#/definitions/StatusRequestAllRes"
+            }
+          }
+        }
+      }
+    },
+    "/StatusRequest/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "id of the StatusRequest",
+          "type": "string"
+        },
+        {
+          "name": "authorization",
+          "description": "Access token to authorize the user",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "tags": [
+          "StatusRequest"
+        ],
+        "summary": "API Endpoint to find a StatusRequest",
+        "description": "Find one from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "StatusRequest has found",
+            "schema": {
+              "$ref": "#/definitions/StatusRequestRes"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "StatusRequest"
+        ],
+        "summary": "API Endpoint to delete the StatusRequest",
+        "description": "Delete StatusRequest from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "StatusRequest has deleted",
+            "schema": {
+              "$ref": "#/definitions/StatusRequestRes"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "StatusRequest"
+        ],
+        "summary": "API Endpoint for update StatusRequest",
+        "description": "Update the existing StatusRequest in database",
+        "parameters": [
+          {
+            "name": "StatusRequest",
+            "description": "params to update the StatusRequest",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/StatusRequest"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "StatusRequest has Updated",
+            "schema": {
+              "$ref": "#/definitions/StatusRequestRes"
+            }
+          }
+        }
+      }
+    },
+    "/citizen":{
+      "post": {
+        "tags": [
+          "Category"
+        ],
+        "summary": "Create a new Category",
+        "description": "Add new category",
+        "parameters": [
+          {
+            "name": "category",
+            "description": "add new category",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Category"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "new category is created",
+            "schema": {
+              "$ref": "#/definitions/CategoryRes"
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Citizen"
+        ],
+        "summary": "Find all the citizen",
+        "description": "View all the citizen",
+        "parameters": [
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "View all the citizen",
+            "schema": {
+              "type": "object",
+              "$ref": "#/definitions/CitizenRes"
+            }
+          }
+        }
+      }
+    },
+    "/citizen/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "id of the citizen",
+          "type": "string"
+        },
+        {
+          "name": "authorization",
+          "description": "Access token to authorize the user",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "tags": [
+          "Citizen"
+        ],
+        "summary": "API Endpoint to find a citizen",
+        "description": "Find one from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Citizen has found",
+            "schema": {
+              "$ref": "#/definitions/CitizenRes"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Citizen"
+        ],
+        "summary": "API Endpoint to delete the Citizen",
+        "description": "Delete Citizen from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Citizen has deleted",
+            "schema": {
+              "$ref": "#/definitions/CitizenRes"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Citizen"
+        ],
+        "summary": "API Endpoint for update Citizen",
+        "description": "Update the existing Citizen in database",
+        "parameters": [
+          {
+            "name": "Citizen",
+            "description": "params to update the Citizen",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Citizen"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Citizen has Updated",
+            "schema": {
+              "$ref": "#/definitions/CitizenRes"
+            }
+          }
+        }
+      }
+    },
+    "/citizenComment": {
+      "post": {
+        "tags": [
+          "CitizenComment"
+        ],
+        "summary": "Create a new CitizenComment",
+        "description": "Add new CitizenComment",
+        "parameters": [
+          {
+            "name": "CitizenComment",
+            "description": "add new CitizenComment",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CitizenComment"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "new CitizenComment is created",
+            "schema": {
+              "$ref": "#/definitions/CitizenCommentRes"
+            }
+          }
+        }
+      }
+    },
+    "/citizenComment/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "id of the citizenComment",
+          "type": "string"
+        },
+        {
+          "name": "authorization",
+          "description": "Access token to authorize the user",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "tags": [
+          "CitizenComment"
+        ],
+        "summary": "API Endpoint to find a citizenComment",
+        "description": "Find one from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "CitizenComment has found",
+            "schema": {
+              "$ref": "#/definitions/CitizenCommentRes"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "CitizenComment"
+        ],
+        "summary": "API Endpoint to delete the citizenComment",
+        "description": "Delete citizenComment from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "CitizenComment has deleted",
+            "schema": {
+              "$ref": "#/definitions/CitizenCommentRes"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "CitizenComment"
+        ],
+        "summary": "API Endpoint for update CitizenComment",
+        "description": "Update the existing citizenComment in database",
+        "parameters": [
+          {
+            "name": "CitizenComment",
+            "description": "params to update the citizenComment",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CitizenComment"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "CitizenComment has Updated",
+            "schema": {
+              "$ref": "#/definitions/CitizenCommentRes"
+            }
+          }
+        }
+      }
+    },
+    "/citizenRate": {
+      "post": {
+        "tags": [
+          "CitizenRate"
+        ],
+        "summary": "Create a new CitizenRate",
+        "description": "Add new CitizenRate",
+        "parameters": [
+          {
+            "name": "CitizenRate",
+            "description": "add new CitizenRate",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CitizenRate"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "new CitizenRate is created",
+            "schema": {
+              "$ref": "#/definitions/CitizenRateRes"
+            }
+          }
+        }
+      }
+    },
+    "/citizenRate/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "id of the CitizenRate",
+          "type": "string"
+        },
+        {
+          "name": "authorization",
+          "description": "Access token to authorize the user",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "tags": [
+          "CitizenRate"
+        ],
+        "summary": "API Endpoint to find a CitizenRate",
+        "description": "Find one from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "CitizenRate has found",
+            "schema": {
+              "$ref": "#/definitions/CitizenRateRes"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "CitizenRate"
+        ],
+        "summary": "API Endpoint to delete the CitizenRate",
+        "description": "Delete CitizenRate from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "CitizenRate has deleted",
+            "schema": {
+              "$ref": "#/definitions/CitizenRateRes"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "CitizenRate"
+        ],
+        "summary": "API Endpoint for update CitizenRate",
+        "description": "Update the existing CitizenRate in database",
+        "parameters": [
+          {
+            "name": "CitizenRate",
+            "description": "params to update the CitizenRate",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CitizenRate"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "CitizenRate has Updated",
+            "schema": {
+              "$ref": "#/definitions/CitizenRateRes"
+            }
+          }
+        }
+      }
+    },
+    "/request":{
+      "post": {
+        "tags": [
+          "Request"
+        ],
+        "summary": "Create a new Request",
+        "description": "Add new Request",
+        "parameters": [
+          {
+            "name": "Request",
+            "description": "add new Request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Request"
+            }
+          },
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "new Request is created",
+            "schema": {
+              "$ref": "#/definitions/RequestRes"
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Request"
+        ],
+        "summary": "Find all the Request",
+        "description": "View all the Request",
+        "parameters": [
+          {
+            "name": "authorization",
+            "description": "Access token to authorize the user",
+            "in": "header",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "View all the Request",
+            "schema": {
+              "type": "object",
+              "$ref": "#/definitions/RequestAllRes"
+            }
+          }
+        }
+      }
+    },
+    "/request/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "id of the request",
+          "type": "string"
+        },
+        {
+          "name": "authorization",
+          "description": "Access token to authorize the user",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "tags": [
+          "Request"
+        ],
+        "summary": "API Endpoint to find a Request",
+        "description": "Find one from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Request has found",
+            "schema": {
+              "$ref": "#/definitions/RequestRes"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Request"
+        ],
+        "summary": "API Endpoint to delete the Request",
+        "description": "Delete Request from the database",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Request has deleted",
+            "schema": {
+              "$ref": "#/definitions/RequestRes"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Request"
+        ],
+        "summary": "API Endpoint for update Request",
+        "description": "Update the existing Request in database",
+        "parameters": [
+          {
+            "name": "Request",
+            "description": "params to update the Request",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Request"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Request has Updated",
+            "schema": {
+              "$ref": "#/definitions/RequestRes"
+            }
+          }
+        }
+      }
+    }
+
+  },
+
+  "definitions": {
+    "SignupRsp": {
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "User": {
+      "required": [
+        "firstName",
+        "lastName",
+        "email",
+        "password"
+      ],
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "role": {
+          "type": "integer"
+        }
+      }
+    },
+    "UserLogin": {
+      "required": [
+        "email",
+        "password"
+      ],
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "UserLoginRsp": {
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "Song": {
+      "required": [
+        "title",
+        "url"
+      ],
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "rating": {
+          "type": "integer",
+          "format": "Int32"
+        }
+      }
+    },
+    "UpdateSong": {
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "rating": {
+          "type": "integer",
+          "format": "Int32"
+        }
+      }
+    },
+    "Songs": {
+      "properties": {
+        "docs": {
+          "type": "array",
+          "$ref": "#/definitions/Song"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        }
+      }
+    },
+    "PlayList": {
+      "required": [
+        "name"
+      ],
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string",
+          "uniqueItems": true
+        },
+        "name": {
+          "type": "string"
+        },
+        "songs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "PlayListCustomRsp": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string",
+          "uniqueItems": true
+        },
+        "name": {
+          "type": "string"
+        },
+        "songs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Song"
+          }
+        },
+        "user": {
+          "$ref": "#/definitions/UserCustomRsp"
+        }
+      }
+    },
+    "UserCustomRsp": {
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        }
+      }
+    },
+    "PlayLists": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/PlayListCustomRsp"
+      }
+    },
+    "Category": {
+      "required": [
+        "name",
+        "code"
+      ],
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        }
+      }
+    },
+    "CategoryRes":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        }
+      }
+    },
+    "CategogyAllRes": {
+      "properties": {
+        "docs": {
+          "type": "array",
+          "$ref": "#/definitions/CategoryRes"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        }
+      }
+    },
+    "District": {
+      "required": [
+        "name"
+      ],
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "level": {
+          "type": "number"
+        },
+        "remark": {
+          "type": "string"
+        }
+      }
+    },
+    "DistrictRes":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "level": {
+          "type": "number"
+        },
+        "remark": {
+          "type": "string"
+        }
+      }
+    },
+    "DistrictAllRes": {
+      "properties": {
+        "docs": {
+          "type": "array",
+          "$ref": "#/definitions/DistrictRes"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        }
+      }
+    },
+    "Faqs": {
+      "required": [],
+      "type": "object",
+      "properties": {
+        "answer": {
+          "type": "string"
+        },
+        "question": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "updated_by": {
+          "type": "string"
+        }
+      }
+    },
+    "FaqsRes":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "answer": {
+          "type": "string"
+        },
+        "question": {
+          "type": "string"
+        },
+        "updated_by": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+
+      }
+    },
+    "FaqsAllRes":{
+      "properties": {
+        "docs": {
+          "type": "array",
+          "$ref": "#/definitions/FaqsRes"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        }
+      }
+    },
+    "Roles": {
+      "required": [
+        "name",
+        "code"
+      ],
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        }
+      }
+    },
+    "RolesRes":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        }
+      }
+    },
+    "RolesAllRes": {
+      "properties": {
+        "docs": {
+          "type": "array",
+          "$ref": "#/definitions/RolesRes"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        }
+      }
+    },
+    "Service": {
+      "required": [
+        "category_id",
+        "name"
+      ],
+      "type": "object",
+      "properties": {
+        "category_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "is_deleted": {
+          "type": "string"
+        },
+        "process_time": {
+          "type": "number"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "updated_by": {
+          "type": "string"
+        }
+      }
+    },
+    "ServiceRes":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "category_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "is_deleted": {
+          "type": "string"
+        },
+        "process_time": {
+          "type": "number"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "updated_by": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+
+      }
+    },
+    "ServiceAllRes":{
+      "properties": {
+        "docs": {
+          "type": "array",
+          "$ref": "#/definitions/ServiceRes"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        }
+      }
+    },
+    "StatusRequest": {
+      "required": [
+        "name"
+      ],
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        }
+      }
+    },
+    "StatusRequestRes":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        }
+      }
+    },
+    "StatusRequestAllRes": {
+      "properties": {
+        "docs": {
+          "type": "array",
+          "$ref": "#/definitions/StatusRequestRes"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        }
+      }
+    },
+    "Citizen": {
+      "required": [
+        "full_name",
+        "email",
+        "username",
+        "password",
+        "type"
+      ],
+      "type": "object",
+      "properties": {
+        "full_name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "is_deleted": {
+          "type": "string"
+        }
+      }
+    },
+    "CitizenRes":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "is_deleted": {
+          "type": "string"
+        }
+      }
+    },
+    "CitizenAllRes": {
+      "properties": {
+        "docs": {
+          "type": "array",
+          "$ref": "#/definitions/CitizenRes"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        }
+      }
+    },
+    "CitizenComment": {
+      "required": [
+        "citizen_id",
+        "request_id",
+        "content"
+      ],
+      "type": "object",
+      "properties": {
+        "citizen_id": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "showYn": {
+          "type": "string"
+        },
+        "is_deleted": {
+          "type": "string"
+        }
+      }
+    },
+    "CitizenCommentRes":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "citizen_id": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "showYn": {
+          "type": "string"
+        },
+        "is_deleted": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+
+      }
+    },
+    "CitizenCommentAllRes":{
+      "properties": {
+        "docs": {
+          "type": "array",
+          "$ref": "#/definitions/CitizenCommentRes"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        }
+      }
+    },
+    "CitizenRate": {
+      "required": [
+        "citizen_id",
+        "request_id"
+      ],
+      "type": "object",
+      "properties": {
+        "citizen_id": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "rate": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "is_deleted": {
+          "type": "string"
+        }
+      }
+    },
+    "CitizenRateRes":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "citizen_id": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "rate": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "is_deleted": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+
+      }
+    },
+    "CitizenRateAllRes":{
+      "properties": {
+        "docs": {
+          "type": "array",
+          "$ref": "#/definitions/CitizenRateRes"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        }
+      }
+    },
+    "UnitPopulate":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "CitizenPopulate":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    },
+    "DistrictPopulate":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "ServicePopulate":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "Unit_processPopulate":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    },
+    "Request": {
+      "required": [
+        "citizen_id",
+        "district_id",
+        "service_id",
+        "title",
+        "content"
+      ],
+      "type": "object",
+      "properties": {
+        "citizen_id": {
+          "type": "string"
+        },
+        "district_id": {
+          "type": "string"
+        },
+        "service_id": {
+          "type": "string"
+        },
+        "date_req": {
+          "type": "string"
+        },
+        "status_req_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "unit_combine_id": {
+          "type": "string"
+        },
+        "images_req": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "files_req":  {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confirmed": {
+          "type": "string"
+        },
+        "confirm_user_id": {
+          "type": "string"
+        },
+        "date_confirm": {
+          "type": "string"
+        },
+        "images_public":  {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "files_public":  {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isPublic": {
+          "type": "string"
+        },
+        "date_public": {
+          "type": "string"
+        },
+        "public_user_id": {
+          "type": "string"
+        },
+        "content_public": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "is_deleted": {
+          "type": "string"
+        }
+      }
+    },
+    "RequestRes":{
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "citizen_id": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CitizenPopulate"
+          }
+        },
+        "district_id": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DistrictPopulate"
+         }
+        },
+        "service_id": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServicePopulate"
+          }
+        },
+        "date_req": {
+          "type": "string"
+        },
+        "status_req_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "unit_combine_id": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UnitPopulate"
+          }
+        },
+        "images_req":  {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "files_req":  {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confirmed": {
+          "type": "string"
+        },
+        "confirm_user_id": {
+          "type": "string"
+        },
+        "date_confirm": {
+          "type": "string"
+        },
+        "images_public": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "files_public":  {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isPublic": {
+          "type": "string"
+        },
+        "date_public": {
+          "type": "string"
+        },
+        "public_user_id": {
+          "type": "string"
+        },
+        "content_public": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "is_deleted": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "unit_process": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Unit_processPopulate"
+          }
+        }
+
+      }
+    },
+    "RequestAllRes":{
+      "properties": {
+        "docs": {
+          "type": "array",
+          "$ref": "#/definitions/RequestRes"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "pages": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}
