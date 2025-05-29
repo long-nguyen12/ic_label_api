@@ -18,7 +18,7 @@ export default {
       if (error) {
         return res.status(400).json(error.details);
       }
-
+      console.log(req.body);
       let userInfo = await User.findOne({
         $or: [{ user_email: value.user_email }, { user_name: value.user_name }],
       });
@@ -55,15 +55,16 @@ export default {
       const user = await User.findOne({
         user_name: value.user_name,
         is_deleted: false,
+      }).populate({
+        path: "user_classify",
+        select: "_id tenvaitro",
       });
 
       if (!user) {
-        return res
-          .status(401)
-          .json({
-            success: false,
-            message: "Tài khoản hoặc mật khẩu không đúng",
-          });
+        return res.status(401).json({
+          success: false,
+          message: "Tài khoản hoặc mật khẩu không đúng",
+        });
       }
 
       if (user) {
@@ -73,13 +74,10 @@ export default {
         );
         if (authenticted) {
           if (!user.active) {
-            return res
-              .status(401)
-              .json({
-                success: false,
-                message:
-                  "Tài khoản đã tạm khóa, vui lòng liên hệ quản trị viên.",
-              });
+            return res.status(401).json({
+              success: false,
+              message: "Tài khoản đã tạm khóa, vui lòng liên hệ quản trị viên.",
+            });
           }
           const updatePass = await User.findByIdAndUpdate(
             { _id: user._id },
@@ -89,12 +87,10 @@ export default {
           const token = jwt.issue({ _id: user._id, isUser: true }, "10d");
           return res.json({ token });
         }
-        return res
-          .status(401)
-          .json({
-            success: false,
-            message: "Tài khoản hoặc mật khẩu không đúng",
-          });
+        return res.status(401).json({
+          success: false,
+          message: "Tài khoản hoặc mật khẩu không đúng",
+        });
       }
     } catch (err) {
       console.error(err);
@@ -112,7 +108,7 @@ export default {
       if (req.query.limit && req.query.limit === "0") {
         options.pagination = false;
       }
-      options.populate = [{ path: "role_id", select: "_id tenvaitro" }];
+      options.populate = [{ path: "user_classify", select: "_id tenvaitro" }];
       options.select = "-password -is_deleted";
       const users = await User.paginate(query, options);
       return res.json(users);
@@ -126,8 +122,8 @@ export default {
     try {
       const { id } = req.params;
       const user = await User.findById(id).populate({
-        path: "bomon_id",
-        select: "tenbomon mabomon",
+        path: "user_classify",
+        select: "_id tenvaitro",
       });
       if (!user) {
         responseAction.error(res, 404, "");

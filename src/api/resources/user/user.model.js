@@ -16,6 +16,7 @@ const userSchema = new Schema(
         },
         user_gender: { type: String },
         user_avatar: { type: String },
+        role: { type: String }, // user, admin, superadmin
         is_deleted: { type: Boolean, default: false, select: false },
         active: { type: Boolean, default: true },
     },
