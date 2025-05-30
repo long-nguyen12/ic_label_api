@@ -6,7 +6,8 @@ const { Schema } = mongoose;
 const phanquyenvaitroSchema = new Schema({
   tenvaitro: {type: String},
   is_deleted: {type: Boolean, default: false},
-  vaitro: {}
+  vaitro: {},
+  mota: {type: String},
 },{
   timestamps: {
     createdAt: 'created_at',
