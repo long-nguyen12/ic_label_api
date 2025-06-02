@@ -134,3 +134,45 @@ imgUploadRouter
     );
 
 imgUploadRouter.route("/files/:id").get(imgUploadController.downloadFile);
+
+// Route for uploading large dataset files
+let largeFileStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "./uploads/files");
+    },
+    filename: function (req, file, cb) {
+        let originalname = convertFileName(file.originalname);
+        cb(null, originalname);
+    },
+});
+
+function checkLargeFileUploadPath(req, res, next) {
+    let path = "./uploads/files";
+    fs.exists(path, function (exists) {
+        if (exists) {
+            next();
+        } else {
+            fs.mkdir(path, function (err) {
+                if (err) {
+                    console.log("Error in folder creation");
+                    next();
+                }
+                next();
+            });
+        }
+    });
+}
+
+let uploadLargeFile = multer({
+    storage: largeFileStorage,
+    limits: { fileSize: 10 * 1024 * 1024 * 1024 }, // 10GB
+});
+
+// Route for large file upload
+imgUploadRouter
+    .route("/upload-file")
+    .post(
+        checkLargeFileUploadPath,
+        uploadLargeFile.single("file"),
+        imgUploadController.uploadLargeFile
+    );

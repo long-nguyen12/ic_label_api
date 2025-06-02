@@ -4,7 +4,7 @@ import mongoosePaginate from 'mongoose-paginate-v2';
 const { Schema } = mongoose;
 const lichsuhoatdongSchema = new Schema({
   user_id: {
-    type: String,
+    type: Schema.Types.ObjectId,
     ref: 'User',
   },
   thaotac: {type: String}, // 1 Thêm, 2 Sửa, 3 Xoá, 4 Khác, 5 Trả lời, 6 Xác nhận
