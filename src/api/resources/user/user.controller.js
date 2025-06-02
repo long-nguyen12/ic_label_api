@@ -5,7 +5,7 @@ import * as responseAction from "../../utils/responseAction";
 import { sendEmail } from "../../utils/mailHelper";
 import { filterRequest, optionsRequest } from "../../utils/filterRequest";
 
-import { saveLichSuHoatDong } from "../../utils/lichsuhoatdong";
+import { saveLichSuHoatDong, addLichSuHoatDong } from "../../utils/lichsuhoatdong";
 
 import { getConfig } from "../../../config/config";
 
@@ -18,7 +18,6 @@ export default {
       if (error) {
         return res.status(400).json(error.details);
       }
-      console.log(req.body);
       let userInfo = await User.findOne({
         $or: [{ user_email: value.user_email }, { user_name: value.user_name }],
       });
@@ -38,7 +37,12 @@ export default {
 
       value.user_pass = encryptedPass;
       const user = await User.create(value);
-
+      if(user) {
+        addLichSuHoatDong(
+          user._id,
+          `Đăng ký tài khoản ${user.user_full_name}`
+        );
+      }
       return res.json(user);
     } catch (err) {
       console.error(err);
@@ -147,7 +151,10 @@ export default {
         responseAction.error(res, 404, "");
       }
       if (user) {
-        saveLichSuHoatDong(req.user._id, 3, user, "users");
+        addLichSuHoatDong(
+          req.user._id,
+          `Xoá tài khoản ${user.user_full_name}`
+        );
       }
       return res.json(user);
     } catch (err) {
@@ -196,7 +203,10 @@ export default {
       }
 
       if (user) {
-        saveLichSuHoatDong(req.user._id, 2, user, "users");
+        addLichSuHoatDong(
+          req.user._id,
+          `Chỉnh sửa tài khoản ${user.user_full_name}`
+        );
       }
       return res.json(user);
     } catch (err) {

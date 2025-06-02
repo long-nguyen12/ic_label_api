@@ -3,7 +3,7 @@ import * as responseAction from "../../utils/responseAction";
 import Dataset from "./dataset.model";
 import datasetService from "./dataset.service";
 import Gallery from "../gallery/gallery.model";
-import { saveLichSuHoatDong } from "../../utils/lichsuhoatdong";
+import { saveLichSuHoatDong, addLichSuHoatDong } from "../../utils/lichsuhoatdong";
 import mongoose from "mongoose";
 
 import { getConfig } from "../../../config/config";
@@ -32,6 +32,7 @@ export default {
             image_name: path.basename(image),
           });
         }
+        addLichSuHoatDong(req.user._id, `Thêm mới bộ dữ liệu ${dataset.dataset_name}`);
       }
 
       return res.json(dataset);
@@ -84,7 +85,7 @@ export default {
         responseAction.error(res, 404, "");
       }
       if (dataset) {
-        saveLichSuHoatDong(req.user._id, 3, dataset, "datasets");
+        addLichSuHoatDong(req.user._id, `Xoá bộ dữ liệu ${dataset.dataset_name}`);
       }
       return res.json(dataset);
     } catch (err) {
@@ -108,7 +109,7 @@ export default {
       }
 
       if (dataset) {
-        saveLichSuHoatDong(req.user._id, 2, dataset, "datasets");
+        addLichSuHoatDong(req.user._id, `Chỉnh sửa bộ dữ liệu ${dataset.dataset_name}`);
       }
       return res.json(dataset);
     } catch (err) {

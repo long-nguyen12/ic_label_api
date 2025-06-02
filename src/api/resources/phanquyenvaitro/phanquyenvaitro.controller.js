@@ -2,6 +2,10 @@ import PhanQuyenVaiTro from "./phanquyenvaitro.model";
 
 import * as responseAction from "../../utils/responseAction";
 import { filterRequest, optionsRequest } from "../../utils/filterRequest";
+import {
+  saveLichSuHoatDong,
+  addLichSuHoatDong,
+} from "../../utils/lichsuhoatdong";
 
 export default {
   async findAll(req, res) {
@@ -23,6 +27,10 @@ export default {
   async create(req, res) {
     try {
       const data = await PhanQuyenVaiTro.create(req.body);
+      if (!data) {
+        return responseAction.error(res, 404, "");
+      }
+      addLichSuHoatDong(req.user._id, `Thêm mới vai trò ${data.tenvaitro}`);
       return res.json(data);
     } catch (err) {
       console.log(err, "errerr");
@@ -53,6 +61,7 @@ export default {
       if (!data) {
         return responseAction.error(res, 404, "");
       }
+      addLichSuHoatDong(req.user._id, `Chỉnh sửa vai trò ${data.tenvaitro}`);
       return res.json(data);
     } catch (err) {
       console.error(err);
@@ -69,6 +78,8 @@ export default {
       if (!data) {
         return responseAction.error(res, 404, "");
       }
+
+      addLichSuHoatDong(req.user._id, `Xoá vai trò ${data.tenvaitro}`);
       return res.json(data);
     } catch (err) {
       console.error(err);

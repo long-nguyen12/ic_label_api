@@ -139,3 +139,23 @@ function getTieuDe(data, urltrang){
   
   return {tieude: tieude, url: url}
 }
+
+export const addLichSuHoatDong = async (user_id, data) => {
+  let data_history = {
+    user_id: user_id,
+    tieude: data
+  }
+  try{
+    let lichsu = await LichSuHoatDong.create(data_history)
+    // let datalichsu = {
+    //   data: data.data,
+    //   document_id: data.document_id,
+    //   type: urltrang,
+    //   user_id: user_id,
+    //   lichsu_id: lichsu._id,
+    // }
+    console.log('Lich su hoat dong da duoc luu thanh cong', lichsu);
+  }catch (err){
+    console.log(err)
+  }
+}

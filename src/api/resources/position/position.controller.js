@@ -3,7 +3,10 @@ import * as responseAction from "../../utils/responseAction";
 import Position from "./position.model";
 import positionService from "./position.service";
 
-import { saveLichSuHoatDong } from "../../utils/lichsuhoatdong";
+import {
+  saveLichSuHoatDong,
+  addLichSuHoatDong,
+} from "../../utils/lichsuhoatdong";
 import mongoose from "mongoose";
 
 import { getConfig } from "../../../config/config";
@@ -18,6 +21,10 @@ export default {
       }
 
       const position = await Position.create(value);
+      addLichSuHoatDong(
+        req.user._id,
+        `Thêm mới vai trò ${position.position_name}`
+      );
 
       return res.json(position);
     } catch (err) {
@@ -69,7 +76,10 @@ export default {
         responseAction.error(res, 404, "");
       }
       if (position) {
-        saveLichSuHoatDong(req.user._id, 3, position, "products");
+        addLichSuHoatDong(
+          req.user._id,
+          `Xoá vai trò ${position.position_name}`
+        );
       }
       return res.json(position);
     } catch (err) {
@@ -93,7 +103,10 @@ export default {
       }
 
       if (position) {
-        saveLichSuHoatDong(req.user._id, 2, position, "Products");
+        addLichSuHoatDong(
+          req.user._id,
+          `Chỉnh sửa vai trò ${position.position_name}`
+        );
       }
       return res.json(position);
     } catch (err) {
