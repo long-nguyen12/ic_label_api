@@ -4,7 +4,7 @@ import mongoosePaginate from "mongoose-paginate-v2";
 const { Schema } = mongoose;
 const gallerySchema = new Schema(
   {
-    dataset_id: { type: Schema.Types.ObjectId, ref: "Dataset", required: true },
+    dataset_id: { type: Schema.Types.ObjectId, ref: "dataset", required: true },
     image_name: { type: String, required: true },
     image_caption: { type: Object, default: {} },
     image_bbox: { type: Array },

@@ -35,7 +35,9 @@ export default {
       if (req.query.limit && req.query.limit === "0") {
         options.pagination = false;
       }
-      options.populate=[{path: 'dataset_id',select:'dataset_name dataset_path'}];
+      options.populate = [
+        { path: "dataset_id", select: "dataset_name dataset_path" },
+      ];
       const products = await Gallery.paginate(query, options);
       return res.json(products);
     } catch (err) {

@@ -3,8 +3,13 @@ import * as responseAction from "../../utils/responseAction";
 import Dataset from "./dataset.model";
 import datasetService from "./dataset.service";
 import Gallery from "../gallery/gallery.model";
-import { saveLichSuHoatDong, addLichSuHoatDong } from "../../utils/lichsuhoatdong";
+import {
+  saveLichSuHoatDong,
+  addLichSuHoatDong,
+} from "../../utils/lichsuhoatdong";
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
 
 import { getConfig } from "../../../config/config";
 const config = getConfig(process.env.NODE_ENV);
@@ -16,15 +21,23 @@ export default {
       if (error) {
         return res.status(400).json(error.details);
       }
-
+      const foundDataset = await Dataset.findOne({
+        dataset_name: value.dataset_name,
+      });
+      if (foundDataset) {
+        return res.status(400).send({
+          success: false,
+          message: "Bộ dữ liệu đã tồn tại",
+        });
+      }
       const dataset = await Dataset.create(value);
       if (dataset) {
         const exts = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
-        if (!fs.existsSync(dataset_path)) return [];
+        if (!fs.existsSync(dataset.dataset_path)) return [];
         const images = await fs
-          .readdirSync(dataset_path)
+          .readdirSync(dataset.dataset_path)
           .filter((file) => exts.includes(path.extname(file).toLowerCase()))
-          .map((file) => path.join(dataset_path, file));
+          .map((file) => path.join(dataset.dataset_path, file));
         for (let i = 0; i < images.length; i++) {
           const image = images[i];
           const gallery = await Gallery.create({
@@ -32,7 +45,10 @@ export default {
             image_name: path.basename(image),
           });
         }
-        addLichSuHoatDong(req.user._id, `Thêm mới bộ dữ liệu ${dataset.dataset_name}`);
+        addLichSuHoatDong(
+          req.user._id,
+          `Thêm mới bộ dữ liệu ${dataset.dataset_name}`
+        );
       }
 
       return res.json(dataset);
@@ -85,7 +101,10 @@ export default {
         responseAction.error(res, 404, "");
       }
       if (dataset) {
-        addLichSuHoatDong(req.user._id, `Xoá bộ dữ liệu ${dataset.dataset_name}`);
+        addLichSuHoatDong(
+          req.user._id,
+          `Xoá bộ dữ liệu ${dataset.dataset_name}`
+        );
       }
       return res.json(dataset);
     } catch (err) {
@@ -109,7 +128,10 @@ export default {
       }
 
       if (dataset) {
-        addLichSuHoatDong(req.user._id, `Chỉnh sửa bộ dữ liệu ${dataset.dataset_name}`);
+        addLichSuHoatDong(
+          req.user._id,
+          `Chỉnh sửa bộ dữ liệu ${dataset.dataset_name}`
+        );
       }
       return res.json(dataset);
     } catch (err) {
