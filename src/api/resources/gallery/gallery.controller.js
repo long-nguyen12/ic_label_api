@@ -49,7 +49,10 @@ export default {
   async findOne(req, res) {
     try {
       const { id } = req.params;
-      const gallery = await Gallery.findById(id);
+      const gallery = await Gallery.findById(id).populate({
+        path: "dataset_id",
+        select: "dataset_name dataset_path",
+      });
       if (!gallery) {
         responseAction.error(res, 404, "");
       }
