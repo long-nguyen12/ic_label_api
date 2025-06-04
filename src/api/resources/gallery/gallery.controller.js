@@ -48,8 +48,21 @@ export default {
 
   async findOne(req, res) {
     try {
+      let req_query = {
+        ...req,
+      };
+      console.log("req_query", req_query);
+      let query = filterRequest(req_query, true);
+      let options = optionsRequest(req_query);
+      if (req.query.limit && req.query.limit === "0") {
+        options.pagination = false;
+      }
+      options.populate = [
+        { path: "dataset_id", select: "dataset_name dataset_path" },
+      ];
+
       const { id } = req.params;
-      const gallery = await Gallery.findById(id);
+      const gallery = await Gallery.findById(id, options);
       if (!gallery) {
         responseAction.error(res, 404, "");
       }
