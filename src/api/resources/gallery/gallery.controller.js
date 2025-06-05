@@ -60,9 +60,7 @@ export default {
         {
           $addFields: {
             captionCount: {
-              $size: {
-                $objectToArray: { $ifNull: ["$image_caption", {}] },
-              },
+              $size: { $ifNull: ["$image_caption", []] },
             },
           },
         },
@@ -84,18 +82,6 @@ export default {
   },
   async findOne(req, res) {
     try {
-      let req_query = {
-        ...req,
-      };
-      let query = filterRequest(req_query, true);
-      let options = optionsRequest(req_query);
-      if (req.query.limit && req.query.limit === "0") {
-        options.pagination = false;
-      }
-      options.populate = [
-        { path: "dataset_id", select: "dataset_name dataset_path" },
-      ];
-
       const { id } = req.params;
       const gallery = await Gallery.findById(id).populate({
         path: "dataset_id",
@@ -105,7 +91,6 @@ export default {
         responseAction.error(res, 404, "");
       }
 
-      
       return res.json(gallery);
     } catch (err) {
       console.error(err);
@@ -140,18 +125,18 @@ export default {
       if (error && error.details) {
         return responseAction.error(res, 400, error.details[0]);
       }
-     
+
       const gallery = await Gallery.findOneAndUpdate({ _id: id }, value, {
         new: true,
       });
       if (!gallery) {
-       return responseAction.error(res, 404, "");
+        return responseAction.error(res, 404, "");
       }
 
       if (gallery) {
         saveLichSuHoatDong(req.user._id, 2, gallery, "gallerys");
       }
-      
+
       return res.json(gallery);
     } catch (err) {
       console.error(err);
@@ -172,7 +157,15 @@ export default {
       }
       const FileName = gallery.image_name;
       const PathFolder = gallery.dataset_id.dataset_path;
-      const Path = path.join(__dirname, "..", "..", "..", "..", PathFolder, FileName.replace(/\\/g, "/"));
+      const Path = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        PathFolder,
+        FileName.replace(/\\/g, "/")
+      );
 
       console.log("Path to image:", Path);
 
@@ -185,31 +178,33 @@ export default {
       await axios
         .post("https://icai.ailabs.io.vn/v1/api/detection", formData, {
           headers: {
-          ...formData.getHeaders(),
-        },
-      })
-      .then(async (response) => {
-        console.log("response.data", response.data)
-        const linkBoximg = `https://icai.ailabs.io.vn/v1/api/images/` + response.data.dectect_path.split("/").pop()
-        const gallery = await Gallery.findOneAndUpdate({ _id: id }, { image_detection: linkBoximg }, {
-          new: true,
-        }).populate({
-        path: "dataset_id",
-        select: "dataset_name dataset_path",
-      });
-        res.status(200).json(gallery);
-      })
-      .catch((error) => {
-        console.error(`Lỗi upload: ${Path}`, error.message);
-        res.status(500).json({ error: error.message });
-      });
-
-
-      
+            ...formData.getHeaders(),
+          },
+        })
+        .then(async (response) => {
+          console.log("response.data", response.data);
+          const linkBoximg =
+            `https://icai.ailabs.io.vn/v1/api/images/` +
+            response.data.dectect_path.split("/").pop();
+          const gallery = await Gallery.findOneAndUpdate(
+            { _id: id },
+            { image_detection: linkBoximg },
+            {
+              new: true,
+            }
+          ).populate({
+            path: "dataset_id",
+            select: "dataset_name dataset_path",
+          });
+          res.status(200).json(gallery);
+        })
+        .catch((error) => {
+          console.error(`Lỗi upload: ${Path}`, error.message);
+          res.status(500).json({ error: error.message });
+        });
     } catch (err) {
       console.error(err);
       return res.status(500).send(err);
     }
   },
-
 };

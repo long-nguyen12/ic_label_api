@@ -6,7 +6,7 @@ const gallerySchema = new Schema(
   {
     dataset_id: { type: Schema.Types.ObjectId, ref: "dataset", required: true },
     image_name: { type: String, required: true },
-    image_caption: { type: Object, default: {} },
+    image_caption: { type: Array, default: [] },
     image_bbox: { type: Array },
     image_detection: { type: String },
     have_caption: { type: Boolean, default: false },
