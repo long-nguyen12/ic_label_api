@@ -115,6 +115,7 @@ export default {
   async update(req, res) {
     try {
       const { id } = req.params;
+      console.log("Update dataset with ID:", id);
       const { value, error } = datasetService.validateCreate(req.body, "PUT");
       if (error && error.details) {
         return responseAction.error(res, 400, error.details[0]);
