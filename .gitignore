@@ -6,3 +6,4 @@ docs.md
 /package-lock.json
 yarn.lock
 uploads
+src/output/

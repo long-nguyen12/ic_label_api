@@ -10,6 +10,7 @@ import {
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
+var sizeOf = require("image-size");
 
 import { getConfig } from "../../../config/config";
 const config = getConfig(process.env.NODE_ENV);
@@ -140,4 +141,124 @@ export default {
       return res.status(500).send(err);
     }
   },
+  async downloadAnnotation(req, res) {
+    try {
+      const { id } = req.params;
+      const dataset = await Dataset.findById(id);
+      if (!dataset) {
+        return responseAction.error(res, 404, "Bộ dữ liệu không tồn tại");
+      }
+      const query = {
+        have_caption: true,
+        dataset_id: mongoose.Types.ObjectId(id),
+      };
+      const images = await Gallery.find(query);
+
+      const data = {
+        info: {
+          dataset: dataset.dataset_name,
+        },
+        images: [],
+        annotations: [],
+      };
+
+      for (const item of images) {
+        let { image_name, image_caption } = item;
+        const name = image_name.replace(/\\/g, "/");
+        const caption = image_caption;
+
+        if (!caption || caption.length === 0) continue;
+        // Assuming your images folder is in the same directory as this script
+        // const imagePath = path.join("uploads", folderName, name);
+        const imagePath = path
+          .join(__dirname, "..", "..", "..", "..", dataset.dataset_path, name)
+          .replace(/\\/g, "/");
+
+        if (!fs.existsSync(imagePath)) {
+          return responseAction.error(res, 404, "Tệp chú thích không tồn tại");
+        }
+
+        // Get image information (width and height)
+        const dimensions = await new Promise((resolve, reject) => {
+          sizeOf(imagePath, (err, dimensions) => {
+            if (err) reject(err);
+            else resolve(dimensions);
+          });
+        });
+
+        const id = generateImageId(name);
+        let fileName = name.split(/\\/g).pop();
+        data.images.push({
+          id,
+          width: dimensions.width,
+          height: dimensions.height,
+          file_name: fileName,
+          coco_url: fileName,
+        });
+
+        (caption || []).forEach((value) => {
+          const { caption, segment } = value;
+          // if (bbox.length > 0) {
+          //   // If bbox exists, push annotation objects with bbox
+          //   bbox.forEach((bboxItem, bboxIndex) => {
+          //     data.annotations.push({
+          //       id: data.annotations.length + 1,
+          //       image_id: id, // ID of the last added image
+          //       bbox: bboxItem,
+          //       caption: caption.caption,
+          //       segment_caption: caption.segment_caption,
+          //     });
+          //   });
+          // } else {
+          // If bbox doesn't exist, push annotation objects without bbox
+
+          data.annotations.push({
+            id: data.annotations.length + 1,
+            image_id: id, // ID of the last added image
+            caption: caption.replace(/\s+/g, " ").trim(),
+            segment: segment.replace(/\s+/g, " ").trim(),
+          });
+          // }
+        });
+      }
+
+      // Check if the 'output' folder exists, if not, create it
+      const outputFolderPath = path.join(
+        path.resolve(__dirname, "../../.."),
+        "output"
+      );
+      if (!fs.existsSync(outputFolderPath)) {
+        fs.mkdirSync(outputFolderPath);
+      }
+
+      // Write JSON object to file in the 'output' folder
+      const jsonFilePath = path.join(
+        outputFolderPath,
+        `${dataset.dataset_name}.json`
+      );
+
+      fs.writeFile(jsonFilePath, JSON.stringify(data, null, 2), (err) => {
+        if (err) {
+          console.error("❌ Lỗi ghi file JSON:", err);
+          return res
+            .status(500)
+            .json({ success: false, message: "Lỗi ghi file JSON" });
+        }
+
+        res.download(jsonFilePath);
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send(err);
+    }
+  },
 };
+
+function generateImageId(imageName) {
+  let hash = 0;
+  for (let i = 0; i < imageName.length; i++) {
+    hash = (hash << 5) - hash + imageName.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}

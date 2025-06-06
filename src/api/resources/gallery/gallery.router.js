@@ -39,5 +39,6 @@ galleryRouter.delete(
   passport.authenticate("jwt", { session: false }),
   galleryController.delete
 );
+galleryRouter.put("/", galleryController.updateByFilename);
 
 export default galleryRouter;

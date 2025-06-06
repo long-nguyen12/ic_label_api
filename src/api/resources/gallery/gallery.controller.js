@@ -143,6 +143,35 @@ export default {
       return res.status(500).send(err);
     }
   },
+  async updateByFilename(req, res) {
+    try {
+      const { name } = req.params;
+      const { value, error } = galleryService.validateCreate(req.body, "PUT");
+      if (error && error.details) {
+        return responseAction.error(res, 400, error.details[0]);
+      }
+
+      const gallery = await Gallery.findOneAndUpdate(
+        { image_name: name },
+        value,
+        {
+          new: true,
+        }
+      );
+      if (!gallery) {
+        return responseAction.error(res, 404, "");
+      }
+
+      // if (gallery) {
+      //   saveLichSuHoatDong(req.user._id, 2, gallery, "gallerys");
+      // }
+
+      return res.json(gallery);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send(err);
+    }
+  },
 
   async generateAiImage(req, res) {
     try {
@@ -157,15 +186,17 @@ export default {
       }
       const FileName = gallery.image_name;
       const PathFolder = gallery.dataset_id.dataset_path;
-      const Path = path.join(
-        __dirname,
-        "..",
-        "..",
-        "..",
-        "..",
-        PathFolder,
-        FileName.replace(/\\/g, "/")
-      );
+      const Path = path
+        .join(
+          __dirname,
+          "..",
+          "..",
+          "..",
+          "..",
+          PathFolder,
+          FileName.replace(/\\/g, "/")
+        )
+        .replace(/\\/g, "/");
 
       console.log("Path to image:", Path);
 
