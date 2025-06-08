@@ -108,12 +108,18 @@ export default {
         { _id: id },
         { is_deleted: true },
         { new: true }
-      );
+      ).populate({
+        path: "dataset_id",
+        select: "dataset_name dataset_path",
+      });
       if (!gallery) {
         responseAction.error(res, 404, "");
       }
       if (gallery) {
-        addLichSuHoatDong(req.user._id, `Đã xoá ảnh ${gallery.image_name}`);
+        addLichSuHoatDong(
+          req.user._id,
+          `Đã xoá ảnh ${gallery.image_name} trong bộ dữ liệu ${gallery.dataset_id.dataset_name}`
+        );
       }
       return res.json(gallery);
     } catch (err) {
