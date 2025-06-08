@@ -113,7 +113,7 @@ export default {
         responseAction.error(res, 404, "");
       }
       if (gallery) {
-        addLichSuHoatDong(req.user._id, `Đã xoá ảnh ${gallery._id}`);
+        addLichSuHoatDong(req.user._id, `Đã xoá ảnh ${gallery.image_name}`);
       }
       return res.json(gallery);
     } catch (err) {
@@ -131,13 +131,19 @@ export default {
 
       const gallery = await Gallery.findOneAndUpdate({ _id: id }, value, {
         new: true,
+      }).populate({
+        path: "dataset_id",
+        select: "dataset_name dataset_path",
       });
       if (!gallery) {
         return responseAction.error(res, 404, "");
       }
 
       if (gallery) {
-        addLichSuHoatDong(req.user._id, `Gán nhãn ảnh ${gallery._id}`);
+        addLichSuHoatDong(
+          req.user._id,
+          `Gán nhãn ảnh ${gallery.image_name} trong bộ dữ liệu ${gallery.dataset_id.dataset_name}`
+        );
       }
 
       return res.json(gallery);
