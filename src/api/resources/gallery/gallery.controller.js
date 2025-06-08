@@ -7,7 +7,10 @@ import path from "path";
 import axios from "axios";
 import FormData from "form-data";
 
-import { saveLichSuHoatDong } from "../../utils/lichsuhoatdong";
+import {
+  addLichSuHoatDong,
+  saveLichSuHoatDong,
+} from "../../utils/lichsuhoatdong";
 import mongoose from "mongoose";
 
 import { getConfig } from "../../../config/config";
@@ -110,7 +113,7 @@ export default {
         responseAction.error(res, 404, "");
       }
       if (gallery) {
-        saveLichSuHoatDong(req.user._id, 3, gallery, "gallerys");
+        addLichSuHoatDong(req.user._id, `Đã xoá ảnh ${gallery._id}`);
       }
       return res.json(gallery);
     } catch (err) {
@@ -134,7 +137,7 @@ export default {
       }
 
       if (gallery) {
-        saveLichSuHoatDong(req.user._id, 2, gallery, "gallerys");
+        addLichSuHoatDong(req.user._id, `Gán nhãn ảnh ${gallery._id}`);
       }
 
       return res.json(gallery);
