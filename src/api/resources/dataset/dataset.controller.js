@@ -224,7 +224,7 @@ export default {
 
       // Check if the 'output' folder exists, if not, create it
       const outputFolderPath = path.join(
-        path.resolve(__dirname, "../../.."),
+        path.resolve(__dirname, "../../../.."),
         "output"
       );
       if (!fs.existsSync(outputFolderPath)) {
@@ -239,7 +239,6 @@ export default {
 
       fs.writeFile(jsonFilePath, JSON.stringify(data, null, 2), (err) => {
         if (err) {
-          console.error("❌ Lỗi ghi file JSON:", err);
           return res
             .status(500)
             .json({ success: false, message: "Lỗi ghi file JSON" });
