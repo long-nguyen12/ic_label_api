@@ -1,3 +1,5 @@
+import 'dotenv/config'
+
 import express from "express";
 import passport from "passport";
 import swaggerUi from "swagger-ui-express";
@@ -16,10 +18,10 @@ connect();
 
 index.use(express.json());
 
-index.use(bodyParser.json({ limit: "50mb" }));
+index.use(bodyParser.json({ limit: "2gb" }));
 index.use(
   bodyParser.urlencoded({
-    limit: "50mb",
+    limit: "2gb",
     extended: true,
     parameterLimit: 1000000,
   })

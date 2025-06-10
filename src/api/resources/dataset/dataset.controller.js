@@ -11,9 +11,16 @@ import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 var sizeOf = require("image-size");
+import Mailjet from "node-mailjet";
 
 import { getConfig } from "../../../config/config";
+import { sendEmail } from "../../utils/mailHelper";
 const config = getConfig(process.env.NODE_ENV);
+
+const mailjet = Mailjet.apiConnect(
+  config.MAILJET_API_KEY,
+  config.MAILJET_SECRET_KEY
+);
 
 export default {
   async create(req, res) {
@@ -46,6 +53,38 @@ export default {
             image_name: path.basename(image),
           });
         }
+
+        const createdDataset = await Dataset.findById(dataset._id).populate({
+          path: "annotator_id",
+          select: "user_full_name user_email",
+        });
+        try {
+          await mailjet.post("send", { version: "v3.1" }).request({
+            Messages: [
+              {
+                From: {
+                  Email: config.MAILER_AUTH_USER,
+                  Name: "Hệ thống gán nhãn",
+                },
+                To: [
+                  {
+                    Email: createdDataset.annotator_id.user_email,
+                    Name: createdDataset.annotator_id.full_name,
+                  },
+                ],
+                Subject: "Phân công bộ dữ liệu mới",
+                TextPart: `Bạn đã được phân công bộ dữ liệu "${dataset.dataset_name}". Vui lòng truy cập hệ thống để thực hiện gán nhãn.`,
+                HTMLPart: `<p>Chào ${createdDataset.annotator_id.user_full_name},</p>
+                          <p>Bạn đã được phân công bộ dữ liệu <strong>"${dataset.dataset_name}"</strong>.</p>
+                          <p>Vui lòng truy cập hệ thống để thực hiện gán nhãn.</p>
+                          <p>Trân trọng,</p>
+                          <p>Hệ thống gán nhãn</p>`,
+              },
+            ],
+          });
+        } catch (emailError) {
+          console.error("Error sending email:", emailError);
+        }
         addLichSuHoatDong(
           req.user._id,
           `Thêm mới bộ dữ liệu ${dataset.dataset_name}`
@@ -68,6 +107,12 @@ export default {
       if (req.query.limit && req.query.limit === "0") {
         options.pagination = false;
       }
+      options.populate = [
+        {
+          path: "annotator_id",
+          select: "_id user_full_name user_email",
+        },
+      ];
       const products = await Dataset.paginate(query, options);
       return res.json(products);
     } catch (err) {
@@ -79,7 +124,10 @@ export default {
   async findOne(req, res) {
     try {
       const { id } = req.params;
-      const dataset = await Dataset.findById(id);
+      const dataset = await Dataset.findById(id).populate({
+        path: "annotator_id",
+        select: "user_full_name user_email",
+      });
       if (!dataset) {
         responseAction.error(res, 404, "");
       }
@@ -116,7 +164,6 @@ export default {
   async update(req, res) {
     try {
       const { id } = req.params;
-      console.log("Update dataset with ID:", id);
       const { value, error } = datasetService.validateCreate(req.body, "PUT");
       if (error && error.details) {
         return responseAction.error(res, 400, error.details[0]);
@@ -125,11 +172,45 @@ export default {
       const dataset = await Dataset.findOneAndUpdate({ _id: id }, value, {
         new: true,
       });
+
       if (!dataset) {
         responseAction.error(res, 404, "");
       }
 
       if (dataset) {
+        if (value.annotator_id) {
+          const createdDataset = await Dataset.findById(dataset._id).populate({
+            path: "annotator_id",
+            select: "user_full_name user_email",
+          });
+          try {
+            await mailjet.post("send", { version: "v3.1" }).request({
+              Messages: [
+                {
+                  From: {
+                    Email: config.MAILER_AUTH_USER,
+                    Name: "Hệ thống gán nhãn",
+                  },
+                  To: [
+                    {
+                      Email: createdDataset.annotator_id.user_email,
+                      Name: createdDataset.annotator_id.user_full_name,
+                    },
+                  ],
+                  Subject: "Phân công bộ dữ liệu mới",
+                  TextPart: `Bạn đã được phân công bộ dữ liệu "${dataset.dataset_name}". Vui lòng truy cập hệ thống để thực hiện gán nhãn.`,
+                  HTMLPart: `<p>Chào ${createdDataset.annotator_id.user_full_name},</p>
+                          <p>Bạn đã được phân công bộ dữ liệu <strong>"${dataset.dataset_name}"</strong>.</p>
+                          <p>Vui lòng truy cập hệ thống để thực hiện gán nhãn.</p>
+                          <p>Trân trọng,</p>
+                          <p>Hệ thống gán nhãn</p>`,
+                },
+              ],
+            });
+          } catch (emailError) {
+            console.error("Error sending email:", emailError);
+          }
+        }
         addLichSuHoatDong(
           req.user._id,
           `Chỉnh sửa bộ dữ liệu ${dataset.dataset_name}`

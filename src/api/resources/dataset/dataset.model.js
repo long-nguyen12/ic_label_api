@@ -8,6 +8,7 @@ const datasetSchema = new Schema(
     dataset_path: { type: String, required: true },
     dataset_note: { type: String },
     dataset_num: { type: Number },
+    annotator_id: { type: Schema.Types.ObjectId, ref: "User" },
     is_deleted: { type: Boolean, default: false, select: false },
   },
   {

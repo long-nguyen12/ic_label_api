@@ -9,3 +9,5 @@ uploads
 src/output/
 
 output/
+
+.env
