@@ -40,7 +40,7 @@ galleryRouter.delete(
   galleryController.delete
 );
 galleryRouter.put("/", galleryController.updateByFilename);
-galleryRouter.put(
+galleryRouter.get(
   "/rotate/:id",
   passport.authenticate("jwt", { session: false }),
   galleryController.rotateImage
