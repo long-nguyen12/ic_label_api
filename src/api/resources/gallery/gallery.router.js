@@ -40,5 +40,10 @@ galleryRouter.delete(
   galleryController.delete
 );
 galleryRouter.put("/", galleryController.updateByFilename);
+galleryController.put(
+  "/rotate/:id",
+  passport.authenticate("jwt", { session: false }),
+  galleryController.rotateImage
+);
 
 export default galleryRouter;

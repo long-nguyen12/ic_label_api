@@ -254,4 +254,44 @@ export default {
       return res.status(500).send(err);
     }
   },
+  async rotateImage(req, res) {
+    try {
+      const { id } = req.params;
+      const gallery = await Gallery.findById(id).populate({
+        path: "dataset_id",
+        select: "dataset_name dataset_path",
+      });
+      if (!gallery) {
+        return responseAction.error(res, 404, "Gallery not found");
+      }
+      const FileName = gallery.image_name;
+      const PathFolder = gallery.dataset_id.dataset_path;
+      const imagePath = path
+        .join(
+          __dirname,
+          "..",
+          "..",
+          "..",
+          "..",
+          PathFolder,
+          FileName.replace(/\\/g, "/")
+        )
+        .replace(/\\/g, "/");
+
+      if (!fs.existsSync(imagePath)) {
+        return res.status(404).json({ error: `File not found: ${Path} ` });
+      }
+
+      const rotatedPath = imagePath; // Overwrite original
+      await sharp(imagePath).rotate(Number(90)).toFile(rotatedPath);
+
+      return res.json({
+        success: true,
+        message: "Xoay ảnh thành công"
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send(err);
+    }
+  },
 };
