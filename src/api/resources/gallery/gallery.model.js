@@ -5,6 +5,7 @@ const { Schema } = mongoose;
 const gallerySchema = new Schema(
   {
     dataset_id: { type: Schema.Types.ObjectId, ref: "dataset", required: true },
+    image_index: { type: Number },
     image_name: { type: String, required: true },
     image_caption: { type: Array, default: [] },
     image_bbox: { type: Array },

@@ -45,6 +45,7 @@ export default {
       options.populate = [
         { path: "dataset_id", select: "dataset_name dataset_path" },
       ];
+      options.sort = { image_index: 1 };
       const galleries = await Gallery.paginate(query, options);
       return res.json(galleries);
     } catch (err) {

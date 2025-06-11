@@ -50,6 +50,7 @@ export default {
           const image = images[i];
           const gallery = await Gallery.create({
             dataset_id: dataset._id,
+            image_index: i,
             image_name: path.basename(image),
           });
         }
