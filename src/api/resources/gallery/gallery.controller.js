@@ -283,12 +283,14 @@ export default {
         return res.status(404).json({ error: `File not found: ${Path} ` });
       }
 
-      const rotatedPath = imagePath; // Overwrite original
-      await sharp(imagePath).rotate(Number(90)).toFile(rotatedPath);
+      const tempPath = imagePath + ".rotated";
+      await sharp(imagePath).rotate(Number(angle)).toFile(tempPath);
+
+      fs.renameSync(tempPath, imagePath);
 
       return res.json({
         success: true,
-        message: "Xoay ảnh thành công"
+        message: "Xoay ảnh thành công",
       });
     } catch (err) {
       console.error(err);
