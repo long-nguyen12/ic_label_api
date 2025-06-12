@@ -258,6 +258,9 @@ export default {
   async rotateImage(req, res) {
     try {
       const { id } = req.params;
+      const { angle = 90 } = req.body;
+      const normalizedAngle = Number(angle) % 360;
+
       const gallery = await Gallery.findById(id).populate({
         path: "dataset_id",
         select: "dataset_name dataset_path",
@@ -284,14 +287,99 @@ export default {
       }
 
       const tempPath = imagePath + ".rotated";
-      await sharp(imagePath).rotate(Number(angle)).toFile(tempPath);
+      await sharp(imagePath).rotate(Number(normalizedAngle)).toFile(tempPath);
 
       fs.renameSync(tempPath, imagePath);
 
-      return res.json({
-        success: true,
-        message: "Xoay ảnh thành công",
+      return res.json(gallery);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send(err);
+    }
+  },
+  async rotateImageCounterclockwise(req, res) {
+    try {
+      const { id } = req.params;
+      const { angle = 90 } = req.body; // default 90 degrees
+
+      const gallery = await Gallery.findById(id).populate({
+        path: "dataset_id",
+        select: "dataset_name dataset_path",
       });
+      if (!gallery) {
+        return responseAction.error(res, 404, "Gallery not found");
+      }
+      const FileName = gallery.image_name;
+      const PathFolder = gallery.dataset_id.dataset_path;
+      const imagePath = path
+        .join(
+          __dirname,
+          "..",
+          "..",
+          "..",
+          "..",
+          PathFolder,
+          FileName.replace(/\\/g, "/")
+        )
+        .replace(/\\/g, "/");
+
+      if (!fs.existsSync(imagePath)) {
+        return res.status(404).json({ error: `File not found: ${imagePath}` });
+      }
+
+      const tempPath = imagePath + ".rotated";
+      const rotateAngle = -Math.abs(Number(angle)); // negative for counterclockwise
+      console.log(rotateAngle)
+
+      await sharp(imagePath).rotate(rotateAngle).toFile(tempPath);
+
+      fs.renameSync(tempPath, imagePath);
+
+      return res.json(gallery);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send(err);
+    }
+  },
+
+  async rotateImageClockwise(req, res) {
+    try {
+      const { id } = req.params;
+      const { angle = 90 } = req.body; // default 90 degrees
+
+      const gallery = await Gallery.findById(id).populate({
+        path: "dataset_id",
+        select: "dataset_name dataset_path",
+      });
+      if (!gallery) {
+        return responseAction.error(res, 404, "Gallery not found");
+      }
+      const FileName = gallery.image_name;
+      const PathFolder = gallery.dataset_id.dataset_path;
+      const imagePath = path
+        .join(
+          __dirname,
+          "..",
+          "..",
+          "..",
+          "..",
+          PathFolder,
+          FileName.replace(/\\/g, "/")
+        )
+        .replace(/\\/g, "/");
+
+      if (!fs.existsSync(imagePath)) {
+        return res.status(404).json({ error: `File not found: ${imagePath}` });
+      }
+
+      const tempPath = imagePath + ".rotated";
+      const rotateAngle = Math.abs(Number(angle)); // positive for clockwise
+      console.log(rotateAngle)
+      await sharp(imagePath).rotate(rotateAngle).toFile(tempPath);
+
+      fs.renameSync(tempPath, imagePath);
+
+      return res.json(gallery);
     } catch (err) {
       console.error(err);
       return res.status(500).send(err);

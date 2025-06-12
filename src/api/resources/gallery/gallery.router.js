@@ -41,9 +41,14 @@ galleryRouter.delete(
 );
 galleryRouter.put("/", galleryController.updateByFilename);
 galleryRouter.get(
-  "/rotate/:id",
+  "/rotate-left/:id",
   passport.authenticate("jwt", { session: false }),
-  galleryController.rotateImage
+  galleryController.rotateImageCounterclockwise
+);
+galleryRouter.get(
+  "/rotate-right/:id",
+  passport.authenticate("jwt", { session: false }),
+  galleryController.rotateImageClockwise
 );
 
 export default galleryRouter;

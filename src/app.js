@@ -12,7 +12,7 @@ import bodyParser from "body-parser";
 const cron = require("cron");
 
 const index = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3006;
 
 connect();
 
