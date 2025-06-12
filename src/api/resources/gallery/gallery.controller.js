@@ -259,7 +259,6 @@ export default {
     try {
       const { id } = req.params;
       const { angle = 90 } = req.body;
-      const normalizedAngle = Number(angle) % 360;
 
       const gallery = await Gallery.findById(id).populate({
         path: "dataset_id",
