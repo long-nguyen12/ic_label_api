@@ -65,7 +65,7 @@ export default {
               TextPart: `Bạn đã được cấp tài khoản mới. Vui lòng truy cập hệ thống bằng tài khoản đã được cấp.`,
               HTMLPart: `<p>Chào ${value.user_full_name},</p>
                           <p>Bạn đã được cấp lại tài khoản mới mới.</>
-                          <p>Tên đăng nhập: <strong>"${user_name}"</strong>.</p>
+                          <p>Tên đăng nhập: <strong>"${value.user_name}"</strong>.</p>
                           <p>Mật khẩu: <strong>"${strongPassword}"</strong>.</p>
                           <p>Vui lòng truy cập hệ thống bằng tài khoản đã được cấp.</p>
                           <p>Trân trọng,</p>

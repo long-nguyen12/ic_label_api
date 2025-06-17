@@ -6,7 +6,7 @@ import multer from "multer";
 import fs from "fs";
 import { convertFileName } from "../../utils/fileUtils";
 
-const imgUploadRouter = express.Router();
+export const imgUploadRouter = express.Router();
 
 // config upload image
 let storage = multer.diskStorage({
@@ -171,5 +171,3 @@ imgUploadRouter
     uploadLargeFile.single("file"),
     imgUploadController.uploadLargeFile
   );
-
-export default imgUploadRouter;
