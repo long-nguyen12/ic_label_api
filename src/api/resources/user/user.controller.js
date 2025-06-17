@@ -198,39 +198,6 @@ export default {
         }
       }
 
-      if (value.user_pass === "123456") {
-        let strongPassword = generateStrongPassword(8);
-        const encryptedPass = userService.encryptPassword(strongPassword);
-        value.user_pass = encryptedPass;
-        try {
-          await mailjet.post("send", { version: "v3.1" }).request({
-            Messages: [
-              {
-                From: {
-                  Email: config.MAILER_AUTH_USER,
-                  Name: "Hệ thống gán nhãn",
-                },
-                To: [
-                  {
-                    Email: value.user_email,
-                    Name: userInfo.user_full_name,
-                  },
-                ],
-                Subject: "Cấp lại mật khẩu mới",
-                TextPart: `Bạn đã được cấp lại mật khẩu mới. Vui lòng truy cập hệ thống bằng mật khẩu đã được cấp.`,
-                HTMLPart: `<p>Chào ${userInfo.user_full_name},</p>
-                          <p>Bạn đã được cấp lại mật khẩu mới <strong>"${strongPassword}"</strong>.</p>
-                          <p>Vui lòng truy cập hệ thống bằng mật khẩu đã được cấp.</p>
-                          <p>Trân trọng,</p>
-                          <p>Hệ thống gán nhãn</p>`,
-              },
-            ],
-          });
-        } catch (emailError) {
-          console.error("Error sending email:", emailError);
-        }
-      }
-
       const user = await User.findOneAndUpdate({ _id: id }, value, {
         new: true,
       }).populate({ path: "bomon_id", select: "tenbomon mabomon" });
@@ -375,5 +342,56 @@ export default {
       return responseAction.error(res, 404, "");
     }
     return res.json({ file_id: filename });
+  },
+
+  async generatePassword(req, res) {
+    try {
+      const { id } = req.params;
+      const user = await User.findById(id);
+      if (!user) {
+        return responseAction.error(res, 404, "Người dùng không tồn tại");
+      }
+      const strongPassword = generateStrongPassword(8);
+      const encryptedPass = userService.encryptPassword(strongPassword);
+
+      try {
+        await mailjet.post("send", { version: "v3.1" }).request({
+          Messages: [
+            {
+              From: {
+                Email: config.MAILER_AUTH_USER,
+                Name: "Hệ thống gán nhãn",
+              },
+              To: [
+                {
+                  Email: user.user_email,
+                  Name: user.user_full_name,
+                },
+              ],
+              Subject: "Cấp lại mật khẩu mới",
+              TextPart: `Bạn đã được cấp lại mật khẩu mới. Vui lòng truy cập hệ thống bằng mật khẩu đã được cấp.`,
+              HTMLPart: `<p>Chào ${user.user_full_name},</p>
+                          <p>Bạn đã được cấp lại mật khẩu mới <strong>"${strongPassword}"</strong>.</p>
+                          <p>Vui lòng truy cập hệ thống bằng mật khẩu đã được cấp.</p>
+                          <p>Trân trọng,</p>
+                          <p>Hệ thống gán nhãn</p>`,
+            },
+          ],
+        });
+      } catch (emailError) {
+        console.error("Error sending email:", emailError);
+      }
+
+      const updatedUser = await User.findByIdAndUpdate(
+        id,
+        { user_pass: encryptedPass, user_pass_nohash: strongPassword },
+        { new: true }
+      );
+
+      return res.json(updatedUser);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send(err);
+    }
   },
 };
