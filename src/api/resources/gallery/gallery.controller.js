@@ -1,21 +1,19 @@
+import axios from "axios";
+import FormData from "form-data";
+import fs from "fs";
+import path from "path";
+import sharp from "sharp";
 import { filterRequest, optionsRequest } from "../../utils/filterRequest";
 import * as responseAction from "../../utils/responseAction";
 import Gallery from "./gallery.model";
 import galleryService from "./gallery.service";
-import fs from "fs";
-import path from "path";
-import axios from "axios";
-import FormData from "form-data";
-import sharp from "sharp";
 
-import {
-  addLichSuHoatDong,
-  saveLichSuHoatDong,
-} from "../../utils/lichsuhoatdong";
-import mongoose from "mongoose";
+import { addLichSuHoatDong } from "../../utils/lichsuhoatdong";
 
+import { GoogleGenAI } from "@google/genai";
 import { getConfig } from "../../../config/config";
 const config = getConfig(process.env.NODE_ENV);
+const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
 
 export default {
   async create(req, res) {
@@ -89,7 +87,7 @@ export default {
         { path: "dataset_id", select: "dataset_name dataset_path" },
       ];
       const galleries = await Gallery.aggregate(pipeline);
-      
+
       return res.json(galleries);
     } catch (err) {
       console.error(err);
@@ -339,7 +337,7 @@ export default {
 
       const tempPath = imagePath + ".rotated";
       const rotateAngle = -Math.abs(Number(angle)); // negative for counterclockwise
-      console.log(rotateAngle)
+      console.log(rotateAngle);
 
       await sharp(imagePath).rotate(rotateAngle).toFile(tempPath);
 
@@ -384,12 +382,62 @@ export default {
 
       const tempPath = imagePath + ".rotated";
       const rotateAngle = Math.abs(Number(angle)); // positive for clockwise
-      console.log(rotateAngle)
+      console.log(rotateAngle);
       await sharp(imagePath).rotate(rotateAngle).toFile(tempPath);
 
       fs.renameSync(tempPath, imagePath);
 
       return res.json(gallery);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send(err);
+    }
+  },
+  async generateAICaptions(req, res) {
+    try {
+      const { id } = req.params;
+      console.log("Generate AI captions for gallery_id:", id);
+      const gallery = await Gallery.findById(id);
+      if (!gallery) {
+        return responseAction.error(res, 404, "Gallery not found");
+      }
+      const FileName = gallery.image_name;
+      const folder_path = gallery.dataset_id.dataset_path;
+      const image_path = path
+        .join(
+          __dirname,
+          "..",
+          "..",
+          "..",
+          "..",
+          folder_path,
+          FileName.replace(/\\/g, "/")
+        )
+        .replace(/\\/g, "/");
+      const base64ImageFile = fs.readFileSync(image_path, {
+        encoding: "base64",
+      });
+
+      const contents = [
+        {
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: base64ImageFile,
+          },
+        },
+        {
+          text: "Bạn là một người gán nhãn dữ liệu, nhiệm vụ của bạn là sinh 5 caption cho bức ảnh trên. Mỗi caption có độ dài từ 10-20 từ, các caption phải liên quan đến các đối tượng/vật thể ở trong ảnh, các caption phải mô tả được ngữ cảnh trong ảnh.",
+        },
+      ];
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: contents,
+      });
+      console.log(response.text);
+      return res.json({
+        captions: response.text,
+      });
     } catch (err) {
       console.error(err);
       return res.status(500).send(err);

@@ -50,5 +50,10 @@ galleryRouter.get(
   passport.authenticate("jwt", { session: false }),
   galleryController.rotateImageClockwise
 );
+galleryRouter.get(
+  "generate-captions/:id",
+  passport.authenticate("jwt", { session: false }),
+  galleryController.generateAICaptions
+);
 
 export default galleryRouter;
