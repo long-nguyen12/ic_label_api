@@ -3,7 +3,6 @@ import { getConfig } from "./config";
 
 const config = getConfig(process.env.NODE_ENV);
 mongoose.Promise = global.Promise;
-console.log("config.MONGO_URI: ", config.MONGO_URI);
 export const connect = () =>
   mongoose
     .connect(config.MONGO_URI, {

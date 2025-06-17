@@ -113,7 +113,34 @@ export default {
           path: "annotator_id",
           select: "_id user_full_name user_email",
         },
+        {
+          path: "captioned_images",
+          model: "gallery",
+          match: { have_caption: true },
+          select: "image_name image_caption image_index have_caption",
+        },
+        {
+          path: "all_images",
+          model: "gallery",
+          select: "image_name image_caption image_index have_caption",
+        },
       ];
+      Dataset.schema.virtual("captioned_images", {
+        ref: "gallery",
+        localField: "_id",
+        foreignField: "dataset_id",
+        justOne: false,
+        options: { match: { have_caption: true } },
+      });
+      Dataset.schema.virtual("all_images", {
+        ref: "gallery",
+        localField: "_id",
+        foreignField: "dataset_id",
+        justOne: false,
+      });
+      Dataset.schema.set("toObject", { virtuals: true });
+      Dataset.schema.set("toJSON", { virtuals: true });
+
       const products = await Dataset.paginate(query, options);
       return res.json(products);
     } catch (err) {

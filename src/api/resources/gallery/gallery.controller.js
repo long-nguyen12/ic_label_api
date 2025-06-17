@@ -70,6 +70,16 @@ export default {
           },
         },
         { $match: { captionCount: { $gte: 5 } } },
+        {
+          $lookup: {
+            from: "datasets",
+            localField: "dataset_id",
+            foreignField: "_id",
+            as: "dataset",
+          },
+        },
+        { $unwind: "$dataset" },
+        { $match: { "dataset.is_deleted": false } },
       ];
       let options = optionsRequest(req_query);
       if (req.query.limit && req.query.limit === "0") {
@@ -79,6 +89,7 @@ export default {
         { path: "dataset_id", select: "dataset_name dataset_path" },
       ];
       const galleries = await Gallery.aggregate(pipeline);
+      
       return res.json(galleries);
     } catch (err) {
       console.error(err);
