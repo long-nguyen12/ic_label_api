@@ -396,24 +396,25 @@ export default {
   async generateAICaptions(req, res) {
     try {
       const { id } = req.params;
-      console.log("Generate AI captions for gallery_id:", id);
-      const gallery = await Gallery.findById(id);
+      
+      const gallery = await Gallery.findById(id).populate({
+        path: "dataset_id",
+        select: "dataset_name dataset_path",
+      });
       if (!gallery) {
         return responseAction.error(res, 404, "Gallery not found");
       }
       const FileName = gallery.image_name;
       const folder_path = gallery.dataset_id.dataset_path;
-      const image_path = path
-        .join(
-          __dirname,
-          "..",
-          "..",
-          "..",
-          "..",
-          folder_path,
-          FileName.replace(/\\/g, "/")
-        )
-        .replace(/\\/g, "/");
+      const image_path = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        folder_path,
+        FileName
+      ).replace(/\\/g, "/");
       const base64ImageFile = fs.readFileSync(image_path, {
         encoding: "base64",
       });
@@ -426,7 +427,11 @@ export default {
           },
         },
         {
-          text: "Bạn là một người gán nhãn dữ liệu, nhiệm vụ của bạn là sinh 5 caption cho bức ảnh trên. Mỗi caption có độ dài từ 10-20 từ, các caption phải liên quan đến các đối tượng/vật thể ở trong ảnh, các caption phải mô tả được ngữ cảnh trong ảnh.",
+          text: `Bạn là một người gán nhãn dữ liệu, 
+          nhiệm vụ của bạn là sinh 5 caption cho bức ảnh trên. 
+          Mỗi caption có độ dài từ 10-20 từ,
+          chỉ nêu những đối tượng, hoạt động, bối cảnh, màu sắc hoặc chi tiết đáng chú ý mà ảnh chứa mà không sử dụng từ trừu tượng hoặc suy đoán.
+          Đầu ra là chỉ bao gồm 1 mảng các caption`,
         },
       ];
 
@@ -434,9 +439,18 @@ export default {
         model: "gemini-2.0-flash",
         contents: contents,
       });
-      console.log(response.text);
+      
+      const captions = response.text;
+      const match = captions.match(/\[[^\]]*\]/);
+      if (!match) {
+        return res.status(400).json({
+          error: "No valid captions found in the response.",
+        });
+      }
+      const arr = JSON.parse(match[0]);
+
       return res.json({
-        captions: response.text,
+        captions: arr,
       });
     } catch (err) {
       console.error(err);

@@ -51,7 +51,7 @@ galleryRouter.get(
   galleryController.rotateImageClockwise
 );
 galleryRouter.get(
-  "generate-captions/:id",
+  "/generate-captions/:id",
   passport.authenticate("jwt", { session: false }),
   galleryController.generateAICaptions
 );
