@@ -35,7 +35,7 @@ configJWTStrategy();
 index.use("/uploads", express.static("uploads"));
 
 index.use("/api", restRouter);
-index.use("/api", restDanhMucRouter);
+// index.use("/api", restDanhMucRouter);
 index.use(
   "/api-docs",
   swaggerUi.serve,

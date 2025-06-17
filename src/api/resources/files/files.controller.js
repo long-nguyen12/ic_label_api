@@ -1,9 +1,8 @@
 import path from "path";
 import File from "./file.model";
-import { get } from "request";
 
 export default {
-  findFileById(req, res) {
+  async findFileById(req, res) {
     let { id } = req.params;
     return res.sendFile(path.join(process.cwd(), "./uploads/files/" + id));
   },

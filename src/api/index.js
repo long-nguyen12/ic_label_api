@@ -8,7 +8,7 @@ import { lichsuhoatdongRouter } from "./resources/lichsuhoatdong/lichsuhoatdong.
 import positionRouter from "./resources/position/position.router";
 import datasetRouter from "./resources/dataset/dataset.router";
 import galleryRouter from "./resources/gallery/gallery.router";
-import { filesRouter } from "./resources/files/files.router";
+import filesRouter from "./resources/files/files.router";
 // const restRouter = express.Router();
 
 export const restRouter = express.Router();

@@ -1,6 +1,7 @@
 import * as fileUtils from "../../utils/fileUtils";
 import fs from "fs";
 import path from "path";
+import File from "../files/file.model";
 import unzipper from "unzipper";
 import { createExtractorFromFile } from "node-unrar-js";
 const unrar = require("unrar");
@@ -211,19 +212,40 @@ export default {
       }
       const ext = path.extname(file.originalname).toLowerCase();
       if (ext !== ".pdf") {
-        fs.unlink(file.path, () => {});
+        fs.unlink(file.path, () => { });
         return res.status(400).json({
           success: false,
           message: "Tệp tin không đúng định dạng PDF.",
         });
       }
 
-      return res.status(200).json({
-        success: true,
-        message: "Tải lên thành công!",
-        filename: file.filename,
-        path: file.path,
+      const document = await File.create({
+        file_path: file.path,
       });
+
+      if (document) {
+        const newest = await File.findOne({ is_deleted: false }).sort({
+          created_at: -1,
+        });
+
+        if (!newest) {
+          return res.status(404).json({
+            success: false,
+            message: "No files found.",
+          });
+        }
+
+        await File.updateMany(
+          {
+            _id: { $ne: newest._id },
+            is_deleted: false,
+          },
+          { $set: { is_deleted: true } }
+        );
+      }
+
+
+      return res.status(200).json(document);
     } catch (err) {
       console.error(err);
       return res.status(500).json({
