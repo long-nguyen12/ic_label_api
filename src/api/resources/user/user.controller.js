@@ -5,11 +5,21 @@ import * as responseAction from "../../utils/responseAction";
 import { sendEmail } from "../../utils/mailHelper";
 import { filterRequest, optionsRequest } from "../../utils/filterRequest";
 
-import { saveLichSuHoatDong, addLichSuHoatDong } from "../../utils/lichsuhoatdong";
+import {
+  saveLichSuHoatDong,
+  addLichSuHoatDong,
+} from "../../utils/lichsuhoatdong";
 
 import { getConfig } from "../../../config/config";
+import { generateStrongPassword } from "../../utils/utils";
+import Mailjet from "node-mailjet";
 
 const config = getConfig(process.env.NODE_ENV);
+
+const mailjet = Mailjet.apiConnect(
+  config.MAILJET_API_KEY,
+  config.MAILJET_SECRET_KEY
+);
 
 export default {
   async signup(req, res) {
@@ -37,11 +47,8 @@ export default {
 
       value.user_pass = encryptedPass;
       const user = await User.create(value);
-      if(user) {
-        addLichSuHoatDong(
-          user._id,
-          `Đăng ký tài khoản ${user.user_full_name}`
-        );
+      if (user) {
+        addLichSuHoatDong(user._id, `Đăng ký tài khoản ${user.user_full_name}`);
       }
       return res.json(user);
     } catch (err) {
@@ -151,10 +158,7 @@ export default {
         responseAction.error(res, 404, "");
       }
       if (user) {
-        addLichSuHoatDong(
-          req.user._id,
-          `Xoá tài khoản ${user.user_full_name}`
-        );
+        addLichSuHoatDong(req.user._id, `Xoá tài khoản ${user.user_full_name}`);
       }
       return res.json(user);
     } catch (err) {
@@ -164,7 +168,6 @@ export default {
   },
   async update(req, res) {
     try {
-      console.log(req.body);
       const { id } = req.params;
       const { value, error } = userService.validateSignup(req.body, "PUT");
       if (error && error.details) {
@@ -192,6 +195,39 @@ export default {
           return res
             .status(400)
             .json({ success: false, message: "Email đã được đăng ký" });
+        }
+      }
+
+      if (value.user_pass === "123456") {
+        let strongPassword = generateStrongPassword(8);
+        const encryptedPass = userService.encryptPassword(strongPassword);
+        value.user_pass = encryptedPass;
+        try {
+          await mailjet.post("send", { version: "v3.1" }).request({
+            Messages: [
+              {
+                From: {
+                  Email: config.MAILER_AUTH_USER,
+                  Name: "Hệ thống gán nhãn",
+                },
+                To: [
+                  {
+                    Email: value.user_email,
+                    Name: userInfo.user_full_name,
+                  },
+                ],
+                Subject: "Cấp lại mật khẩu mới",
+                TextPart: `Bạn đã được cấp lại mật khẩu mới. Vui lòng truy cập hệ thống bằng mật khẩu đã được cấp.`,
+                HTMLPart: `<p>Chào ${userInfo.user_full_name},</p>
+                          <p>Bạn đã được cấp lại mật khẩu mới <strong>"${strongPassword}"</strong>.</p>
+                          <p>Vui lòng truy cập hệ thống bằng mật khẩu đã được cấp.</p>
+                          <p>Trân trọng,</p>
+                          <p>Hệ thống gán nhãn</p>`,
+              },
+            ],
+          });
+        } catch (emailError) {
+          console.error("Error sending email:", emailError);
         }
       }
 
