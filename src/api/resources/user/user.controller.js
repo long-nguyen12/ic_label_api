@@ -43,7 +43,41 @@ export default {
             .json({ success: false, message: "Email đã được đăng ký" });
         }
       }
-      const encryptedPass = userService.encryptPassword(value.user_pass);
+
+      const strongPassword = generateStrongPassword(8);
+      const encryptedPass = userService.encryptPassword(strongPassword);
+
+      try {
+        await mailjet.post("send", { version: "v3.1" }).request({
+          Messages: [
+            {
+              From: {
+                Email: config.MAILER_AUTH_USER,
+                Name: "Hệ thống gán nhãn",
+              },
+              To: [
+                {
+                  Email: value.user_email,
+                  Name: value.user_full_name,
+                },
+              ],
+              Subject: "Cấp tài khoản mới mới",
+              TextPart: `Bạn đã được cấp tài khoản mới. Vui lòng truy cập hệ thống bằng tài khoản đã được cấp.`,
+              HTMLPart: `<p>Chào ${value.user_full_name},</p>
+                          <p>Bạn đã được cấp lại tài khoản mới mới.</>
+                          <p>Tên đăng nhập: <strong>"${user_name}"</strong>.</p>
+                          <p>Mật khẩu: <strong>"${strongPassword}"</strong>.</p>
+                          <p>Vui lòng truy cập hệ thống bằng tài khoản đã được cấp.</p>
+                          <p>Trân trọng,</p>
+                          <p>Hệ thống gán nhãn</p>`,
+            },
+          ],
+        });
+      } catch (emailError) {
+        console.error("Error sending email:", emailError);
+      }
+
+      // const encryptedPass = userService.encryptPassword(value.user_pass);
 
       value.user_pass = encryptedPass;
       const user = await User.create(value);
