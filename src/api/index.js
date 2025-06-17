@@ -8,11 +8,13 @@ import { lichsuhoatdongRouter } from "./resources/lichsuhoatdong/lichsuhoatdong.
 import positionRouter from "./resources/position/position.router";
 import datasetRouter from "./resources/dataset/dataset.router";
 import galleryRouter from "./resources/gallery/gallery.router";
+import { filesRouter } from "./resources/files/files.router";
 // const restRouter = express.Router();
 
 export const restRouter = express.Router();
 
 restRouter.use("/users", userRouter);
+restRouter.use("/file", filesRouter);
 restRouter.use("/files", imgUploadRouter);
 restRouter.use("/thong-tin-chung", thongtinchungRouter);
 restRouter.use("/phan-quyen-vai-tro", phanquyenvaitroRouter);

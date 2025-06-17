@@ -201,4 +201,36 @@ export default {
       });
     }
   },
+  async uploadDocumenteFile(req, res) {
+    try {
+      const file = req.file;
+      if (!file) {
+        return res
+          .status(400)
+          .json({ success: false, message: "No file uploaded" });
+      }
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (ext !== ".pdf") {
+        fs.unlink(file.path, () => {});
+        return res.status(400).json({
+          success: false,
+          message: "Tệp tin không đúng định dạng PDF.",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Tải lên thành công!",
+        filename: file.filename,
+        path: file.path,
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        success: false,
+        message: "Giải nén thất bại",
+        error: err.message,
+      });
+    }
+  },
 };
