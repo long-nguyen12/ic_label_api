@@ -137,6 +137,7 @@ export default {
         localField: "_id",
         foreignField: "dataset_id",
         justOne: false,
+        options: { match: { is_deleted: false } },
       });
       Dataset.schema.set("toObject", { virtuals: true });
       Dataset.schema.set("toJSON", { virtuals: true });

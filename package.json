@@ -20,6 +20,7 @@
     "bcryptjs": "^2.4.3",
     "carbone": "^3.5.5",
     "connect-multiparty": "^2.2.0",
+    "cors": "^2.8.5",
     "cron": "^2.3.0",
     "cross-env": "7.0.3",
     "dateformat": "^5.0.3",

@@ -9,6 +9,8 @@ import { restDanhMucRouter } from "./api/danhmucRouter";
 import swaggerDocument from "./config/swagger.json";
 import { configJWTStrategy } from "./api/middlewares/passport-jwt";
 import bodyParser from "body-parser";
+import cors from "cors";
+
 const cron = require("cron");
 
 const index = express();
@@ -16,6 +18,7 @@ const PORT = process.env.PORT || 3006;
 
 connect();
 
+index.use(cors());
 index.use(express.json());
 
 index.use(bodyParser.json({ limit: "2gb" }));

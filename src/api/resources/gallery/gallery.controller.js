@@ -396,7 +396,7 @@ export default {
   async generateAICaptions(req, res) {
     try {
       const { id } = req.params;
-      
+
       const gallery = await Gallery.findById(id).populate({
         path: "dataset_id",
         select: "dataset_name dataset_path",
@@ -439,7 +439,7 @@ export default {
         model: "gemini-2.0-flash",
         contents: contents,
       });
-      
+
       const captions = response.text;
       const match = captions.match(/\[[^\]]*\]/);
       if (!match) {
@@ -449,8 +449,30 @@ export default {
       }
       const arr = JSON.parse(match[0]);
 
+      const segment_response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: `sinh các segment words tiếng Việt cho các câu sau: ${arr}, 
+          theo ví dụ cho câu: "Đường có nhiều xe máy đang dừng chờ đèn đỏ, ô tô phía trước", 
+          kết quả: "Đường có nhiều xe_máy đang dừng chờ đèn_đỏ , ô_tô phía_trước".
+          Đầu ra là chỉ bao gồm 1 mảng các caption`,
+        config: {
+          thinkingConfig: {
+            thinkingBudget: 0, // Disables thinking
+          },
+        }
+      });
+      const segment_captions = segment_response.text;
+      const segment_match = segment_captions.match(/\[[^\]]*\]/);
+      if (!segment_match) {
+        return res.status(400).json({
+          error: "No valid captions found in the response.",
+        });
+      }
+      const segment_arr = JSON.parse(segment_match[0]);
+
       return res.json({
         captions: arr,
+        segment: segment_arr
       });
     } catch (err) {
       console.error(err);
