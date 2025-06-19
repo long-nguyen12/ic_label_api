@@ -36,16 +36,66 @@ export default {
       let req_query = {
         ...req.query,
       };
+
       let query = filterRequest(req_query, true);
       let options = optionsRequest(req_query);
       if (req.query.limit && req.query.limit === "0") {
         options.pagination = false;
       }
+      options.sort = { image_index: 1 };
       options.populate = [
         { path: "dataset_id", select: "dataset_name dataset_path" },
       ];
-      options.sort = { image_index: 1 };
+
       const galleries = await Gallery.paginate(query, options);
+
+      return res.json(galleries);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send(err);
+    }
+  },
+  async findAllUndeletedDatasetImages(req, res) {
+    try {
+      let req_query = {
+        ...req.query,
+      };
+      let matchQuery = filterRequest(req_query, true);
+
+      const pipeline = [
+        { $match: matchQuery },
+        {
+          $lookup: {
+            from: "datasets",
+            localField: "dataset_id",
+            foreignField: "_id",
+            as: "dataset",
+          },
+        },
+        { $unwind: "$dataset" },
+        { $match: { "dataset.is_deleted": { $ne: true } } },
+        {
+          $project: {
+            _id: 1,
+            dataset_id: 1,
+            image_index: 1,
+            image_name: 1,
+            image_caption: 1,
+            image_bbox: 1,
+            image_detection: 1,
+            have_caption: 1,
+            have_bbox: 1,
+            created_at: 1,
+            updated_at: 1,
+            "dataset.dataset_name": 1,
+            "dataset.dataset_path": 1,
+          },
+        },
+        { $sort: { image_index: 1 } },
+      ];
+
+      const galleries = await Gallery.aggregate(pipeline);
+
       return res.json(galleries);
     } catch (err) {
       console.error(err);
@@ -224,8 +274,6 @@ export default {
         )
         .replace(/\\/g, "/");
 
-      console.log("Path to image:", Path);
-
       if (!fs.existsSync(Path)) {
         return res.status(404).json({ error: `File not found: ${Path} ` });
       }
@@ -239,7 +287,6 @@ export default {
           },
         })
         .then(async (response) => {
-          console.log("response.data", response.data);
           const linkBoximg =
             `https://icai.ailabs.io.vn/v1/api/images/` +
             response.data.dectect_path.split("/").pop();

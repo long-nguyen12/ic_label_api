@@ -15,6 +15,11 @@ galleryRouter.get(
   galleryController.generateAiImage
 );
 galleryRouter.get(
+  "/images/all",
+  passport.authenticate("jwt", { session: false }),
+  galleryController.findAllUndeletedDatasetImages
+);
+galleryRouter.get(
   "/all",
   passport.authenticate("jwt", { session: false }),
   galleryController.findAllCaptions
