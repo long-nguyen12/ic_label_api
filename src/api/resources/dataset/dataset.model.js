@@ -38,11 +38,6 @@ datasetSchema.virtual('all_images', {
   options: { match: { is_deleted: false } },
 });
 
-// Indexes for performance
-datasetSchema.index({ _id: 1 });
-datasetSchema.index({ annotator_id: 1 });
-datasetSchema.index({ dataset_name: 1 });
-
 
 datasetSchema.plugin(mongoosePaginate);
 

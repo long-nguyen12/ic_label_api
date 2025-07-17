@@ -1,7 +1,7 @@
 import axios from "axios";
 import FormData from "form-data";
-import fs from 'fs/promises'; // Use promise-based fs
-import { createReadStream } from 'fs'; // Standard fs for streaming
+import fs from "fs/promises"; // Use promise-based fs
+import { createReadStream } from "fs"; // Standard fs for streaming
 import path from "path";
 import sharp from "sharp";
 import { filterRequest, optionsRequest } from "../../utils/filterRequest";
@@ -23,7 +23,7 @@ async function withLock(imagePath, operation, timeout = 10000) {
     if (Date.now() - start > timeout) {
       throw new Error(`Lock timeout for ${imagePath}`);
     }
-    await new Promise(resolve => setTimeout(resolve, 100)); // Wait if locked
+    await new Promise((resolve) => setTimeout(resolve, 100)); // Wait if locked
   }
   imageLocks.set(imagePath, true);
   try {
@@ -75,57 +75,57 @@ export default {
   },
   async findAllUndeletedDatasetImages(req, res) {
     try {
-      let req_query = {
-        ...req.query,
-      };
-      let matchQuery = filterRequest(req_query, true);
+      console.log("Starting findAllUndeletedDatasetImages", {
+        query: req.query,
+        timestamp: new Date().toISOString(),
+      });
+
+      const query = filterRequest(req.query, true);
 
       const pipeline = [
-        { $match: matchQuery },
+        { $match: query },
         {
           $lookup: {
             from: "datasets",
-            localField: "dataset_id",
-            foreignField: "_id",
             as: "dataset",
+            let: { datasetId: "$dataset_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$_id", "$$datasetId"] },
+                  is_deleted: { $ne: true },
+                },
+              },
+            ],
           },
         },
-        { $unwind: "$dataset" },
-        { $match: { "dataset.is_deleted": { $ne: true } } },
-        {
-          $project: {
-            _id: 1,
-            dataset_id: 1,
-            image_index: 1,
-            image_name: 1,
-            image_caption: 1,
-            image_bbox: 1,
-            image_detection: 1,
-            have_caption: 1,
-            have_bbox: 1,
-            created_at: 1,
-            updated_at: 1,
-            "dataset.dataset_name": 1,
-            "dataset.dataset_path": 1,
-          },
-        },
-        { $sort: { image_index: 1 } },
+        { $unwind: { path: "$dataset", preserveNullAndEmptyArrays: true } },
+        { $count: "totalImages" },
       ];
 
-      const galleries = await Gallery.aggregate(pipeline);
+      console.time("findAllUndeletedDatasetImagesQuery");
+      const result = await Gallery.aggregate(pipeline).option({ lean: true });
+      console.timeEnd("findAllUndeletedDatasetImagesQuery");
 
-      return res.json(galleries);
+      const totalImages = result[0]?.totalImages || 0;
+
+      console.log("Query completed", {
+        totalImages,
+        timestamp: new Date().toISOString(),
+      });
+      return res.json({ totalImages });
     } catch (err) {
-      console.error(err);
-      return res.status(500).send(err);
+      console.error("Error in findAllUndeletedDatasetImages:", {
+        error: err.message,
+        stack: err.stack,
+      });
+      return responseAction.error(res, 500, "Internal server error");
     }
   },
   async findAllCaptions(req, res) {
     try {
-      let req_query = {
-        ...req.query,
-      };
-      let query = filterRequest(req_query, true);
+      const query = filterRequest(req.query, true);
+
       const pipeline = [
         { $match: query },
         {
@@ -139,27 +139,33 @@ export default {
         {
           $lookup: {
             from: "datasets",
-            localField: "dataset_id",
-            foreignField: "_id",
             as: "dataset",
+            let: { datasetId: "$dataset_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$_id", "$$datasetId"] },
+                  is_deleted: false,
+                },
+              },
+            ],
           },
         },
-        { $unwind: "$dataset" },
-        { $match: { "dataset.is_deleted": false } },
+        { $unwind: { path: "$dataset", preserveNullAndEmptyArrays: true } },
+        { $count: "totalCaptionedImages" },
       ];
-      let options = optionsRequest(req_query);
-      if (req.query.limit && req.query.limit === "0") {
-        options.pagination = false;
-      }
-      options.populate = [
-        { path: "dataset_id", select: "dataset_name dataset_path" },
-      ];
-      const galleries = await Gallery.aggregate(pipeline);
 
-      return res.json(galleries);
+      const result = await Gallery.aggregate(pipeline).option({ lean: true });
+
+      const totalCaptionedImages = result[0]?.totalCaptionedImages || 0;
+
+      return res.json({ totalCaptionedImages });
     } catch (err) {
-      console.error(err);
-      return res.status(500).send(err);
+      console.error("Error in findAllCaptions:", {
+        error: err.message,
+        stack: err.stack,
+      });
+      return responseAction.error(res, 500, "Internal server error");
     }
   },
   async findOne(req, res) {
@@ -298,8 +304,15 @@ export default {
       try {
         await fs.access(imagePath, fs.constants.R_OK | fs.constants.W_OK);
       } catch (err) {
-        console.error('File access error:', { path: imagePath, error: err.message });
-        return responseAction.error(res, 404, `File not found or inaccessible: ${fileName}`);
+        console.error("File access error:", {
+          path: imagePath,
+          error: err.message,
+        });
+        return responseAction.error(
+          res,
+          404,
+          `File not found or inaccessible: ${fileName}`
+        );
       }
 
       const formData = new FormData();
@@ -362,53 +375,6 @@ export default {
       return res.status(500).send(err);
     }
   },
-  async rotateImage(req, res) {
-    try {
-      const { id } = req.params;
-      const { angle = 90 } = req.body;
-
-      const gallery = await Gallery.findById(id).populate({
-        path: "dataset_id",
-        select: "dataset_name dataset_path",
-      });
-      if (!gallery) {
-        return responseAction.error(res, 404, "Gallery not found");
-      }
-      const FileName = gallery.image_name;
-      const PathFolder = gallery.dataset_id.dataset_path;
-      const imagePath = path
-        .join(
-          __dirname,
-          "..",
-          "..",
-          "..",
-          "..",
-          PathFolder,
-          FileName.replace(/\\/g, "/")
-        )
-        .replace(/\\/g, "/");
-
-      // if (!fs.existsSync(imagePath)) {
-      //   return res.status(404).json({ error: `File not found: ${Path} ` });
-      // }
-      try {
-        await fs.access(imagePath, fs.constants.R_OK | fs.constants.W_OK);
-      } catch (err) {
-        console.error('File access error:', { path: imagePath, error: err.message });
-        return responseAction.error(res, 404, `File not found or inaccessible: ${fileName}`);
-      }
-
-      const tempPath = imagePath + ".rotated";
-      await sharp(imagePath).rotate(Number(normalizedAngle)).toFile(tempPath);
-
-      fs.renameSync(tempPath, imagePath);
-
-      return res.json(gallery);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).send(err);
-    }
-  },
   async rotateImageCounterclockwise(req, res) {
     try {
       const { id } = req.params;
@@ -437,27 +403,41 @@ export default {
 
       try {
         await fs.access(imagePath, fs.constants.R_OK | fs.constants.W_OK);
-        console.log('File is accessible:', imagePath);
+        console.log("File is accessible:", imagePath);
       } catch (err) {
-        console.error('File access error:', { path: imagePath, error: err.message });
-        return responseAction.error(res, 404, `File not found or inaccessible: ${fileName}`);
+        console.error("File access error:", {
+          path: imagePath,
+          error: err.message,
+        });
+        return responseAction.error(
+          res,
+          404,
+          `File not found or inaccessible: ${fileName}`
+        );
       }
 
       // Rotate image
       const rotateAngle = -Math.abs(Number(angle)); // Counterclockwise
       try {
-        const response = await axios.post('https://icai.ailabs.io.vn/v1/api/rotate', {
-          file_path: imagePath,
-          angle: rotateAngle,
-        });
-        console.log('Python API response:', response.data);
+        const response = await axios.post(
+          "https://icai.ailabs.io.vn/v1/api/rotate",
+          {
+            file_path: imagePath,
+            angle: rotateAngle,
+          }
+        );
+        console.log("Python API response:", response.data);
       } catch (err) {
-        console.error('Python API error:', {
+        console.error("Python API error:", {
           status: err.response?.status,
           data: err.response?.data,
           message: err.message,
         });
-        return responseAction.error(res, err.response?.status || 500, err.response?.data?.detail || 'Failed to rotate image via Python API');
+        return responseAction.error(
+          res,
+          err.response?.status || 500,
+          err.response?.data?.detail || "Failed to rotate image via Python API"
+        );
       }
 
       return res.json(gallery);
@@ -493,117 +473,44 @@ export default {
         )
         .replace(/\\/g, "/");
 
-      // if (!fs.existsSync(imagePath)) {
-      //   return res.status(404).json({ error: `File not found: ${imagePath}` });
-      // }
       try {
         await fs.access(imagePath, fs.constants.R_OK | fs.constants.W_OK);
       } catch (err) {
-        console.error('File access error:', { path: imagePath, error: err.message });
-        return responseAction.error(res, 404, `File not found or inaccessible: ${fileName}`);
+        console.error("File access error:", {
+          path: imagePath,
+          error: err.message,
+        });
+        return responseAction.error(
+          res,
+          404,
+          `File not found or inaccessible: ${fileName}`
+        );
       }
 
       const rotateAngle = Math.abs(Number(angle)); // positive for clockwise
       try {
-        const response = await axios.post('https://icai.ailabs.io.vn/v1/api/rotate', {
-          file_path: imagePath,
-          angle: rotateAngle,
-        });
-        console.log('Python API response:', response.data);
+        const response = await axios.post(
+          "https://icai.ailabs.io.vn/v1/api/rotate",
+          {
+            file_path: imagePath,
+            angle: rotateAngle,
+          }
+        );
+        console.log("Python API response:", response.data);
       } catch (err) {
-        console.error('Python API error:', {
+        console.error("Python API error:", {
           status: err.response?.status,
           data: err.response?.data,
           message: err.message,
         });
-        return responseAction.error(res, err.response?.status || 500, err.response?.data?.detail || 'Failed to rotate image via Python API');
+        return responseAction.error(
+          res,
+          err.response?.status || 500,
+          err.response?.data?.detail || "Failed to rotate image via Python API"
+        );
       }
 
       return res.json(gallery);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).send(err);
-    }
-  },
-  async generateAICaptions(req, res) {
-    try {
-      const { id } = req.params;
-      const user = await User.findOne({ is_deleted: false, _id: req.user._id });
-
-      const gallery = await Gallery.findById(id).populate({
-        path: "dataset_id",
-        select: "dataset_name dataset_path",
-      });
-      if (!gallery) {
-        return responseAction.error(res, 404, "Gallery not found");
-      }
-      const FileName = gallery.image_name;
-      const folder_path = gallery.dataset_id.dataset_path;
-      const image_path = path
-        .join(__dirname, "..", "..", "..", "..", folder_path, FileName)
-        .replace(/\\/g, "/");
-      const base64ImageFile = fs.readFileSync(image_path, {
-        encoding: "base64",
-      });
-
-      const contents = [
-        {
-          inlineData: {
-            mimeType: "image/jpeg",
-            data: base64ImageFile,
-          },
-        },
-        {
-          text: `Sinh 5 captions bằng tiếng Việt cho bức ảnh trên. 
-          Mỗi caption có độ dài từ 10-20 từ,
-          chỉ nêu những đối tượng, hoạt động, bối cảnh, chi tiết đáng chú ý,
-          các mô tả không sử dụng từ trừu tượng hoặc suy đoán.
-          Đầu ra là 1 mảng các caption.`,
-        },
-      ];
-
-      const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: contents,
-      });
-
-      const captions = response.text;
-
-      const match = captions.match(/\[[^\]]*\]/);
-      if (!match) {
-        return res.status(400).json({
-          error: "Không sinh được caption cho ảnh này.",
-        });
-      }
-      const arr = JSON.parse(match[0]);
-
-      const segment_response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: `sinh các segment words tiếng Việt cho các câu sau: ${arr}, 
-          theo ví dụ cho câu: "Đường có nhiều xe máy đang dừng chờ đèn đỏ, ô tô phía trước", 
-          kết quả: "Đường có nhiều xe_máy đang dừng chờ đèn_đỏ , ô_tô phía_trước".
-          Đầu ra là 1 mảng các caption`,
-          Đầu ra là chỉ bao gồm 1 mảng các caption`,
-        config: {
-          thinkingConfig: {
-            thinkingBudget: 0, // Disables thinking
-          },
-        },
-      });
-      const segment_captions = segment_response.text;
-      const segment_match = segment_captions.match(/\[[^\]]*\]/);
-
-      if (!segment_match) {
-        return res.status(400).json({
-          error: "No valid captions found in the response.",
-        });
-      }
-      const segment_arr = JSON.parse(segment_match[0]);
-
-      return res.json({
-        captions: arr,
-        segment: segment_arr,
-      });
     } catch (err) {
       console.error(err);
       return res.status(500).send(err);
@@ -618,25 +525,29 @@ export default {
         });
       }
 
-      const segment_arr = await axios.post(
-        "https://icai.ailabs.io.vn/v1/api/caption2segment",
-        { captions: captions },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }).then(response => response.data.segment).catch(error => {
+      const segment_arr = await axios
+        .post(
+          "https://icai.ailabs.io.vn/v1/api/caption2segment",
+          { captions: captions },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        )
+        .then((response) => response.data.segment)
+        .catch((error) => {
           console.error("Error segmenting captions:", error);
           return res.status(500).json({ error: "Error segmenting captions." });
         });
 
       return res.json({
         captions: captions,
-        segment: segment_arr
+        segment: segment_arr,
       });
     } catch (err) {
       console.error(err);
       return res.status(500).send(err);
     }
-  }
+  },
 };

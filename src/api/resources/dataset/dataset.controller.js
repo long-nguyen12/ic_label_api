@@ -100,63 +100,157 @@ export default {
   },
   async findAll(req, res) {
     try {
-      let req_query = {
-        ...req.query,
-      };
-      let query = filterRequest(req_query, true);
-      let options = optionsRequest(req_query);
+      const query = filterRequest(req.query, true);
+      let options = optionsRequest(req.query);
+
+      // Enforce pagination limits
       if (req.query.limit && req.query.limit === "0") {
         options.pagination = false;
+      } else {
+        options.limit = Math.min(options.limit || 10, 20);
       }
-      options.populate = [
+
+      const galleryFilter = { is_deleted: false };
+      if (req.query.have_caption === "true") {
+        galleryFilter.have_caption = true;
+      }
+      if (req.query.image_name) {
+        galleryFilter.image_name = {
+          $regex: req.query.image_name,
+          $options: "i",
+        };
+      }
+      if (req.query.have_bbox === "true") {
+        galleryFilter.have_bbox = true;
+      }
+
+      const imageLimit = parseInt(req.query.image_limit, 10) || 10;
+
+      const pipeline = [
+        { $match: query },
         {
-          path: "annotator_id",
-          select: "_id user_full_name user_email",
+          $lookup: {
+            from: "galleries",
+            as: "images",
+            let: { datasetId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$dataset_id", "$$datasetId"] },
+                  ...galleryFilter,
+                },
+              },
+              { $sort: { image_index: 1 } },
+              { $limit: imageLimit },
+              {
+                $project: {
+                  _id: 1,
+                  image_name: 1,
+                  image_caption: 1,
+                  image_index: 1,
+                  have_caption: 1,
+                  have_bbox: 1,
+                  dataset_id: 1,
+                },
+              },
+            ],
+          },
         },
         {
-          path: "captioned_images",
-          model: "gallery",
-          match: { have_caption: true },
-          select: "image_name image_caption image_index have_caption",
+          $lookup: {
+            from: "galleries",
+            as: "imageCounts",
+            let: { datasetId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$dataset_id", "$$datasetId"] },
+                  is_deleted: false,
+                },
+              },
+              {
+                $group: {
+                  _id: null,
+                  totalImages: { $sum: 1 },
+                  captionedImages: {
+                    $sum: { $cond: [{ $eq: ["$have_caption", true] }, 1, 0] },
+                  },
+                },
+              },
+              { $project: { _id: 0, totalImages: 1, captionedImages: 1 } },
+            ],
+          },
+        },
+        { $unwind: { path: "$imageCounts", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "users",
+            as: "annotator_id",
+            let: { annotatorId: "$annotator_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$_id", "$$annotatorId"] },
+                },
+              },
+              { $project: { _id: 1, user_full_name: 1, user_email: 1 } },
+            ],
+          },
         },
         {
-          path: "all_images",
-          model: "gallery",
-          select: "image_name image_caption image_index have_caption",
+          $unwind: { path: "$annotator_id", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $project: {
+            _id: 1,
+            dataset_name: 1,
+            dataset_path: 1,
+            dataset_note: 1,
+            annotator_id: 1,
+            is_deleted: 1,
+            created_at: 1,
+            updated_at: 1,
+            images: 1,
+            totalImages: { $ifNull: ["$imageCounts.totalImages", 0] },
+            captioned_images: { $ifNull: ["$imageCounts.captionedImages", 0] },
+          },
         },
       ];
-      // Dataset.schema.virtual("captioned_images", {
-      //   ref: "gallery",
-      //   localField: "_id",
-      //   foreignField: "dataset_id",
-      //   justOne: false,
-      //   options: { match: { have_caption: true } },
-      // });
-      // Dataset.schema.virtual("all_images", {
-      //   ref: "gallery",
-      //   localField: "_id",
-      //   foreignField: "dataset_id",
-      //   justOne: false,
-      //   options: { match: { is_deleted: false } },
-      // });
-      // Dataset.schema.set("toObject", { virtuals: true });
-      // Dataset.schema.set("toJSON", { virtuals: true });
 
-      const products = await Dataset.paginate(query, {
-        ...options,
-        lean: true, // Use lean for read-only queries
-        leanWithId: true,
-      });
+      // Apply pagination
+      if (options.pagination !== false) {
+        pipeline.push(
+          { $sort: options.sort || { created_at: -1 } },
+          { $skip: (options.page - 1) * options.limit },
+          { $limit: options.limit }
+        );
+      }
 
-      products.docs = products.docs.map(doc => ({
-        ...doc,
-        captioned_images: doc.all_images.filter(img => img.have_caption === true),
-      }));
+      let products = await Dataset.aggregate(pipeline).option({ lean: true });
+
+      const totalDocs = await Dataset.countDocuments(query);
+      products = {
+        docs: products,
+        totalDocs,
+        limit: options.limit,
+        page: options.page,
+        totalPages:
+          options.pagination !== false
+            ? Math.ceil(totalDocs / options.limit)
+            : 1,
+        hasNextPage:
+          options.pagination !== false &&
+          options.page * options.limit < totalDocs,
+        hasPrevPage: options.page > 1,
+      };
 
       return res.json(products);
     } catch (err) {
-      console.error(err);
-      return res.status(500).send(err);
+      console.error("Error in findAll:", {
+        error: err.message,
+        stack: err.stack,
+      });
+      return responseAction.error(res, 500, "Internal server error");
     }
   },
 
