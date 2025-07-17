@@ -22,6 +22,9 @@ const gallerySchema = new Schema(
   }
 );
 
+gallerySchema.index({ dataset_id: 1, have_caption: 1, is_deleted: 1 });
+gallerySchema.index({ image_name: 1 });
+
 gallerySchema.plugin(mongoosePaginate);
 
 export default mongoose.model("gallery", gallerySchema);

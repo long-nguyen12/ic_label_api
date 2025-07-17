@@ -16,8 +16,33 @@ const datasetSchema = new Schema(
       createdAt: "created_at",
       updatedAt: "updated_at",
     },
+    toObject: { virtuals: true },
+    toJSON: { virtuals: true },
   }
 );
+
+// Virtuals for captioned_images and all_images
+datasetSchema.virtual('captioned_images', {
+  ref: 'Gallery',
+  localField: '_id',
+  foreignField: 'dataset_id',
+  justOne: false,
+  options: { match: { have_caption: true } },
+});
+
+datasetSchema.virtual('all_images', {
+  ref: 'Gallery',
+  localField: '_id',
+  foreignField: 'dataset_id',
+  justOne: false,
+  options: { match: { is_deleted: false } },
+});
+
+// Indexes for performance
+datasetSchema.index({ _id: 1 });
+datasetSchema.index({ annotator_id: 1 });
+datasetSchema.index({ dataset_name: 1 });
+
 
 datasetSchema.plugin(mongoosePaginate);
 
