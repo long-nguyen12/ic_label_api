@@ -10,6 +10,8 @@ const gallerySchema = new Schema(
     image_caption: { type: Array, default: [] },
     image_bbox: { type: Array },
     image_detection: { type: String },
+    image_width: { type: Number },
+    image_height: { type: Number },
     have_caption: { type: Boolean, default: false },
     have_bbox: { type: Boolean, default: false },
     is_deleted: { type: Boolean, default: false, select: false },

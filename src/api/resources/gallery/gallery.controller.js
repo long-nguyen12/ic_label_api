@@ -9,6 +9,7 @@ import * as responseAction from "../../utils/responseAction";
 import Gallery from "./gallery.model";
 import galleryService from "./gallery.service";
 import User from "../user/user.model";
+import Label from "../label/label.model";
 import { addLichSuHoatDong } from "../../utils/lichsuhoatdong";
 
 import { GoogleGenAI } from "@google/genai";
@@ -304,18 +305,45 @@ export default {
       const formData = new FormData();
       formData.append("file", createReadStream(imagePath));
       await axios
-        .post("https://icai.ailabs.io.vn/v1/api/detection", formData, {
+        .post("http://127.0.0.1:5001/v1/api/detection", formData, {
+          // .post("https://icai.ailabs.io.vn/v1/api/detection", formData, {
           headers: {
             ...formData.getHeaders(),
           },
         })
         .then(async (response) => {
-          const linkBoximg =
-            `https://icai.ailabs.io.vn/v1/api/images/` +
-            response.data.dectect_path.split("/").pop();
+          const {
+            width: image_width,
+            height: image_height,
+            boxes,
+            dectect_path,
+          } = response.data;
+          const image_boxes = await Promise.all(
+            boxes.map(async (box) => {
+              const detected_label = await Label.findOne({
+                label_name: box.class_name,
+              });
+              return {
+                box: box.box,
+                label_id: detected_label?._id,
+                label_color: detected_label?.label_color,
+                label_name: box.class_name,
+              };
+            })
+          );
+          const detected_image = dectect_path
+            .replace(/\\/g, "/")
+            .split("/")
+            .pop();
           const gallery = await Gallery.findOneAndUpdate(
             { _id: id },
-            { image_detection: linkBoximg },
+            {
+              image_detection: detected_image,
+              image_bbox: image_boxes,
+              image_width: image_width,
+              image_height: image_height,
+              have_bbox: true,
+            },
             {
               new: true,
             }
@@ -511,15 +539,9 @@ export default {
       }
       const FileName = gallery.image_name;
       const folder_path = gallery.dataset_id.dataset_path;
-      const image_path = path.join(
-        __dirname,
-        "..",
-        "..",
-        "..",
-        "..",
-        folder_path,
-        FileName
-      ).replace(/\\/g, "/");
+      const image_path = path
+        .join(__dirname, "..", "..", "..", "..", folder_path, FileName)
+        .replace(/\\/g, "/");
       const base64ImageFile = fs.readFileSync(image_path, {
         encoding: "base64",
       });
@@ -561,6 +583,12 @@ export default {
           theo ví dụ cho câu: "Đường có nhiều xe máy đang dừng chờ đèn đỏ, ô tô phía trước", 
           kết quả: "Đường có nhiều xe_máy đang dừng chờ đèn_đỏ , ô_tô phía_trước".
           Đầu ra là 1 mảng các caption`,
+          Đầu ra là chỉ bao gồm 1 mảng các caption`,
+        config: {
+          thinkingConfig: {
+            thinkingBudget: 0, // Disables thinking
+          },
+        },
       });
       const segment_captions = segment_response.text;
       const segment_match = segment_captions.match(/\[[^\]]*\]/);
@@ -574,7 +602,7 @@ export default {
 
       return res.json({
         captions: arr,
-        segment: segment_arr
+        segment: segment_arr,
       });
     } catch (err) {
       console.error(err);
