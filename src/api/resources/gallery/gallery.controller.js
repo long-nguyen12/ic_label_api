@@ -298,9 +298,6 @@ export default {
         )
         .replace(/\\/g, "/");
 
-      // if (!fs.existsSync(imagePath)) {
-      //   return res.status(404).json({ error: `File not found: ${imagePath} ` });
-      // }
       try {
         await fs.access(imagePath, fs.constants.R_OK | fs.constants.W_OK);
       } catch (err) {
@@ -311,7 +308,7 @@ export default {
         return responseAction.error(
           res,
           404,
-          `File not found or inaccessible: ${fileName}`
+          `File not found or inaccessible: ${imagePath}`
         );
       }
 
@@ -328,7 +325,7 @@ export default {
           const {
             width: image_width,
             height: image_height,
-            boxes,
+            bboxes: boxes,
             dectect_path,
           } = response.data;
           const image_boxes = await Promise.all(
