@@ -2,12 +2,12 @@ import Joi from 'joi';
 import bcrypt from 'bcryptjs';
 
 export default {
-  encryptPassword(palinText) {
-    const salt = bcrypt.genSaltSync(10);
-    return bcrypt.hashSync(palinText, salt);
+  async encryptPassword(palinText) {
+    const salt = await bcrypt.genSalt(10);
+    return bcrypt.hash(palinText, salt);
   },
-  comparePassword(plainText, encrypedPassword) {
-    return bcrypt.compareSync(plainText, encrypedPassword);
+  async comparePassword(plainText, encrypedPassword) {
+    return bcrypt.compare(plainText, encrypedPassword);
   },
   validateSignup(body, method) {
 

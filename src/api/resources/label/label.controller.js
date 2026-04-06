@@ -1,13 +1,10 @@
-import { filterRequest, optionsRequest } from "../../utils/filterRequest";
+﻿import { filterRequest, optionsRequest } from "../../utils/filterRequest";
 import * as responseAction from "../../utils/responseAction";
 import Label from "./label.model";
 import labelService from "./label.service";
 import { addLichSuHoatDong } from "../../utils/lichsuhoatdong";
 import xlsx from "xlsx";
 import fs from "fs";
-import { getConfig } from "../../../config/config";
-
-const config = getConfig(process.env.NODE_ENV);
 
 export default {
   async create(req, res) {
@@ -16,38 +13,43 @@ export default {
       if (error) {
         return res.status(400).json(error.details);
       }
+
       const foundLabel = await Label.findOne({
         label_name: value.label_name,
+        is_deleted: false,
       });
       if (foundLabel) {
         return res.status(400).send({
           success: false,
-          message: "Nhãn đã tồn tại",
+          message: "Label already exists",
         });
       }
+
       const label = await Label.create(value);
-
-      addLichSuHoatDong(req.user._id, `Thêm mới nhãn ${label.label_name}`);
-
+      addLichSuHoatDong(req.user._id, `Create label ${label.label_name}`);
       return res.json(label);
     } catch (err) {
       console.error(err);
       return res.status(500).send(err);
     }
   },
+
   async findAll(req, res) {
     try {
-      let req_query = {
+      const reqQuery = {
         ...req.query,
       };
-      let query = filterRequest(req_query, true);
-      let options = optionsRequest(req_query);
+      const query = filterRequest(reqQuery, true);
+      const options = optionsRequest(reqQuery);
+
       if (req.query.limit && req.query.limit === "0") {
         options.pagination = false;
       }
+
       options.sort = {
         created_at: 1,
       };
+
       const labels = await Label.paginate(query, options);
       return res.json(labels);
     } catch (err) {
@@ -59,13 +61,15 @@ export default {
   async findOne(req, res) {
     try {
       const { id } = req.params;
-      const label = await Label.findById(id).populate({
-        path: "annotator_id",
-        select: "user_full_name user_email",
+      const label = await Label.findOne({
+        _id: id,
+        is_deleted: false,
       });
+
       if (!label) {
-        responseAction.error(res, 404, "");
+        return responseAction.error(res, 404, "");
       }
+
       return res.json(label);
     } catch (err) {
       console.error(err);
@@ -77,22 +81,23 @@ export default {
     try {
       const { id } = req.params;
       const label = await Label.findOneAndUpdate(
-        { _id: id },
+        { _id: id, is_deleted: false },
         { is_deleted: true },
         { new: true }
       );
+
       if (!label) {
-        responseAction.error(res, 404, "");
+        return responseAction.error(res, 404, "");
       }
-      if (label) {
-        addLichSuHoatDong(req.user._id, `Xoá nhãn ${label.label_name}`);
-      }
+
+      addLichSuHoatDong(req.user._id, `Delete label ${label.label_name}`);
       return res.json(label);
     } catch (err) {
       console.error(err);
       return res.status(500).send(err);
     }
   },
+
   async update(req, res) {
     try {
       const { id } = req.params;
@@ -101,57 +106,86 @@ export default {
         return responseAction.error(res, 400, error.details[0]);
       }
 
-      const label = await Label.findOneAndUpdate({ _id: id }, value, {
-        new: true,
-      });
-
-      if (!label) {
-        responseAction.error(res, 404, "");
-      }
-
-      if (label) {
-        if (value.annotator_id) {
-          const createdLabel = await Label.findById(label._id).populate({
-            path: "annotator_id",
-            select: "user_full_name user_email",
+      if (value.label_name) {
+        const duplicateLabel = await Label.findOne({
+          _id: { $ne: id },
+          label_name: value.label_name,
+          is_deleted: false,
+        });
+        if (duplicateLabel) {
+          return res.status(400).send({
+            success: false,
+            message: "Label already exists",
           });
         }
-        addLichSuHoatDong(req.user._id, `Chỉnh sửa nhãn ${label.label_name}`);
       }
+
+      const label = await Label.findOneAndUpdate(
+        { _id: id, is_deleted: false },
+        value,
+        {
+          new: true,
+        }
+      );
+
+      if (!label) {
+        return responseAction.error(res, 404, "");
+      }
+
+      addLichSuHoatDong(req.user._id, `Update label ${label.label_name}`);
       return res.json(label);
     } catch (err) {
       console.error(err);
       return res.status(500).send(err);
     }
   },
-  async createLabelByExcel(req, res) {
-    try {
-      const filePath = req.file.path;
 
+  async createLabelByExcel(req, res) {
+    let filePath = "";
+
+    try {
+      if (!req.file || !req.file.path) {
+        return responseAction.error(res, 400, {
+          message: "File upload is required",
+        });
+      }
+
+      filePath = req.file.path;
       const workbook = xlsx.readFile(filePath);
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const rows = xlsx.utils.sheet_to_json(sheet);
 
       for (const row of rows) {
-        const labelColor = getRandomColor();
+        const labelName = String(row.label_name || row.labelName || "").trim();
+        if (!labelName) {
+          continue;
+        }
+
+        const labelColor =
+          row.label_color || row.labelColor || getRandomColor();
+        const labelVietnamese = row.label_vietnamese || row.labelVietnamese;
+
         const existingLabel = await Label.findOne({
-          label_name: row.label_name,
+          label_name: labelName,
         });
+
         if (!existingLabel) {
-          const label = await Label.create({
-            label_name: row.label_name,
+          await Label.create({
+            label_name: labelName,
             label_color: labelColor,
+            label_vietnamese: labelVietnamese,
           });
         } else {
-          const updatedLabel = await Label.findOneAndUpdate(
+          await Label.findOneAndUpdate(
             { _id: existingLabel._id },
             {
-              label_name: row.label_name || existingLabel.label_name,
+              label_name: labelName,
               label_color:
-                row.label_color || existingLabel.label_color || labelColor,
+                labelColor || existingLabel.label_color || getRandomColor(),
               label_vietnamese:
-                row.label_vietnamese || existingLabel.label_vietnamese,
+                labelVietnamese || existingLabel.label_vietnamese,
+              is_deleted: false,
             },
             { new: true }
           );
@@ -164,6 +198,10 @@ export default {
     } catch (err) {
       console.error(err);
       return res.status(500).json({ success: false, message: err.message });
+    } finally {
+      if (filePath) {
+        fs.unlink(filePath, () => {});
+      }
     }
   },
 };

@@ -37,7 +37,7 @@ export default {
             .status(400)
             .json({ success: false, message: "Tài khoản đã được đăng ký" });
         }
-        if (value.email === userInfo.email) {
+        if (value.user_email === userInfo.user_email) {
           return res
             .status(400)
             .json({ success: false, message: "Email đã được đăng ký" });
@@ -45,7 +45,7 @@ export default {
       }
 
       const strongPassword = generateStrongPassword(8);
-      const encryptedPass = userService.encryptPassword(strongPassword);
+      const encryptedPass = await userService.encryptPassword(strongPassword);
 
       try {
         await mailjet.post("send", { version: "v3.1" }).request({
@@ -113,7 +113,7 @@ export default {
       }
 
       if (user) {
-        const authenticted = userService.comparePassword(
+        const authenticted = await userService.comparePassword(
           value.user_pass,
           user.user_pass
         );
@@ -124,7 +124,7 @@ export default {
               message: "Tài khoản đã tạm khóa, vui lòng liên hệ quản trị viên.",
             });
           }
-          const updatePass = await User.findByIdAndUpdate(
+          await User.findByIdAndUpdate(
             { _id: user._id },
             { user_pass_nohash: value.user_pass },
             { new: true }
@@ -257,7 +257,7 @@ export default {
     if (!user) {
       return responseAction.error(res, 404, "");
     }
-    const authenticted = userService.comparePassword(
+    const authenticted = await userService.comparePassword(
       req.body.old_password,
       user.user_pass
     );
@@ -267,7 +267,7 @@ export default {
         .json({ success: false, message: "Mật khẩu cũ không đúng" });
     }
 
-    const encryptedPass = userService.encryptPassword(req.body.new_password);
+    const encryptedPass = await userService.encryptPassword(req.body.new_password);
 
     const userUpdate = await User.findOneAndUpdate(
       { _id: req.user._id },
@@ -308,7 +308,7 @@ export default {
     try {
       let user = await User.findOne({
         is_deleted: false,
-        email: req.body.email,
+        user_email: req.body.email,
       });
 
       if (!user) {
@@ -320,7 +320,7 @@ export default {
       let url = config.host_admin + "/reset-password?token=" + token;
       let mailOptions = {
         from: `Hồ sơ sức khỏe <${config.mail.auth.user}>`, // sender address
-        to: user.email, // list of receivers
+        to: user.user_email, // list of receivers
         subject: "Quên mật khẩu", // Subject line
         html: `<p>Bạn có yêu cầu thay đổi mật khẩu trên hệ</p>
               </br>
@@ -347,18 +347,18 @@ export default {
         responseAction.error(res, 404, "");
       }
 
-      const encryptedPass = userService.encryptPassword(req.body.password);
+      const encryptedPass = await userService.encryptPassword(req.body.password);
 
       const userUpdate = await User.findOneAndUpdate(
         { _id: req.user._id },
-        { password: encryptedPass },
+        { user_pass: encryptedPass },
         { new: true }
       );
 
       return res.json(userUpdate);
     } catch (e) {
       console.log(e);
-      return res.status(500).send(err);
+      return res.status(500).send(e);
     }
   },
 
@@ -386,7 +386,7 @@ export default {
         return responseAction.error(res, 404, "Người dùng không tồn tại");
       }
       const strongPassword = generateStrongPassword(8);
-      const encryptedPass = userService.encryptPassword(strongPassword);
+      const encryptedPass = await userService.encryptPassword(strongPassword);
 
       try {
         await mailjet.post("send", { version: "v3.1" }).request({

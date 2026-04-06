@@ -6,30 +6,37 @@ import User from "../resources/user/user.model";
 const config = getConfig(process.env.NODE_ENV);
 
 export const configJWTStrategy = () => {
+  const allowQueryToken =
+    process.env.ALLOW_JWT_QUERY_TOKEN === "true" ||
+    process.env.NODE_ENV !== "production";
+  const extractors = [PassportJWT.ExtractJwt.fromAuthHeaderAsBearerToken()];
+  if (allowQueryToken) {
+    extractors.push(PassportJWT.ExtractJwt.fromUrlQueryParameter("token"));
+  }
+
   const opts = {
-    jwtFromRequest: PassportJWT.ExtractJwt.fromExtractors([
-      PassportJWT.ExtractJwt.fromAuthHeaderAsBearerToken(),
-      PassportJWT.ExtractJwt.fromUrlQueryParameter("token")
-    ]),
+    jwtFromRequest: PassportJWT.ExtractJwt.fromExtractors(extractors),
     secretOrKey: config.secret
   };
 
   Passport.use(
     new PassportJWT.Strategy(opts, (payload, done) => {
-      if (payload.isUser) {
-        User.findOne({_id: payload._id, is_deleted: false}, {password: 0})
-          .populate({path: 'role_id', select: 'tenvaitro vaitro'}).lean()
-          .exec(function (err, user) {
-            if (err) {
-              return done(err);
-            }
-            if (user) {
-              user.isUser = true
-              return done(null, user);
-            }
-            return done(null, false);
-          });
+      if (!payload.isUser) {
+        return done(null, false);
       }
+
+      User.findOne({_id: payload._id, is_deleted: false}, {password: 0})
+        .populate({path: 'role_id', select: 'tenvaitro vaitro'}).lean()
+        .exec(function (err, user) {
+          if (err) {
+            return done(err);
+          }
+          if (user) {
+            user.isUser = true
+            return done(null, user);
+          }
+          return done(null, false);
+        });
     })
   );
 };

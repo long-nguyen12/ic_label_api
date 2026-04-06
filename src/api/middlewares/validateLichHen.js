@@ -4,7 +4,18 @@ import { getConfig } from '../../config/config';
 const config = getConfig(process.env.NODE_ENV);
 
 export default function (req, res, next) {
-  let token = req.query.token || req.headers['token'];
+  const allowQueryToken =
+    process.env.ALLOW_JWT_QUERY_TOKEN === "true" ||
+    process.env.NODE_ENV !== "production";
+  const authHeader = req.headers["authorization"];
+  const bearerToken =
+    authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.slice("Bearer ".length)
+      : null;
+  let token =
+    bearerToken ||
+    req.headers["token"] ||
+    (allowQueryToken ? req.query.token : null);
   if (token) {
     // verifies secret and checks exp
     jwt.verify(token, config.secret, function (err, decoded) {

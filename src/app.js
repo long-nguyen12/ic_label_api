@@ -5,40 +5,86 @@ import passport from "passport";
 import swaggerUi from "swagger-ui-express";
 import { connect } from "./config/db";
 import { restRouter } from "./api";
-import { restDanhMucRouter } from "./api/danhmucRouter";
 import swaggerDocument from "./config/swagger.json";
 import { configJWTStrategy } from "./api/middlewares/passport-jwt";
-import bodyParser from "body-parser";
 import cors from "cors";
-
-const cron = require("cron");
+import compression from "compression";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import { getConfig } from "./config/config";
 
 const index = express();
 const PORT = process.env.PORT || 3006;
+const config = getConfig(process.env.NODE_ENV);
+
+const toNumber = (value, fallback) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const jsonLimit = process.env.REQUEST_BODY_LIMIT || "10mb";
+const parameterLimit = toNumber(process.env.PARAMETER_LIMIT, 10000);
+const staticMaxAgeMs = toNumber(process.env.STATIC_MAX_AGE_MS, 60 * 60 * 1000);
+const corsOrigin = process.env.CORS_ORIGIN;
+const rateLimitWindowMs = toNumber(
+  process.env.RATE_LIMIT_WINDOW_MS,
+  15 * 60 * 1000
+);
+const rateLimitMax = toNumber(process.env.RATE_LIMIT_MAX, 300);
+
+if (process.env.NODE_ENV === "production") {
+  if (!config.secret || config.secret === "MY APP") {
+    console.error("JWT secret is not set. Define JWT_SECRET in production.");
+    process.exit(1);
+  }
+}
 
 connect();
 
-index.use(cors());
-index.use(express.json());
-
-index.use(bodyParser.json({ limit: "2gb" }));
+index.disable("x-powered-by");
 index.use(
-  bodyParser.urlencoded({
-    limit: "2gb",
-    extended: true,
-    parameterLimit: 1000000,
+  helmet({
+    crossOriginResourcePolicy: false,
   })
 );
+index.use(compression());
 
-index.use(express.urlencoded({ extended: true }));
+index.use(
+  cors({
+    origin: corsOrigin
+      ? corsOrigin.split(",").map((origin) => origin.trim()).filter(Boolean)
+      : true,
+  })
+);
+index.use(express.json({ limit: jsonLimit }));
+index.use(
+  express.urlencoded({
+    limit: jsonLimit,
+    extended: true,
+    parameterLimit,
+  })
+);
 
 index.use(passport.initialize()); // req.user
 configJWTStrategy();
 
-index.use("/uploads", express.static("uploads"));
+const apiLimiter = rateLimit({
+  windowMs: rateLimitWindowMs,
+  max: rateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
+index.use(
+  "/uploads",
+  express.static("uploads", {
+    dotfiles: "ignore",
+    maxAge: staticMaxAgeMs,
+  })
+);
+
+index.use("/api", apiLimiter);
 index.use("/api", restRouter);
-// index.use("/api", restDanhMucRouter);
 index.use(
   "/api-docs",
   swaggerUi.serve,
@@ -47,18 +93,13 @@ index.use(
   })
 );
 
-index.use("/api/*", (req, res) => {
-  return res.status(404).json({ success: false, message: "API không tồn tại" });
-});
-
-index.use("/api/*", (req, res, next) => {
-  const error = new Error("Not found");
-  error.message = "Invalid route";
+index.use("/api", (req, res, next) => {
+  const error = new Error("API not found");
   error.status = 404;
   next(error);
 });
 
-index.use("/api/*", (error, req, res, next) => {
+index.use((error, req, res, next) => {
   res.status(error.status || 500);
   return res.json({
     error: {

@@ -20,7 +20,7 @@ export const getDirPath = (dirName, rootPath = './storage') => {
 
 function createFolderIfNotExist(folderPath) {
   if (!fs.existsSync(folderPath)) {
-    fs.mkdirSync(folderPath);
+    fs.mkdirSync(folderPath, { recursive: true });
   }
 }
 
@@ -41,7 +41,7 @@ const multipartMiddleware = multipart({uploadDir: tempDir});
 
 const checkTempFolder = (req, res, next) => {
   if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir);
+    fs.mkdirSync(tempDir, { recursive: true });
     createIfNotExistFolders()
   }
   next();
@@ -49,7 +49,7 @@ const checkTempFolder = (req, res, next) => {
 
 const prepareTempFolder = () => {
   if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir);
+    fs.mkdirSync(tempDir, { recursive: true });
   }
   clearFolder(tempDir);
 };

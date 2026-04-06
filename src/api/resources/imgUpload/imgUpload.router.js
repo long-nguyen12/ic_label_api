@@ -1,17 +1,39 @@
 import express from "express";
 import imgUploadController from "./imgUpload.controller";
-import { checkTempFolder, multipartMiddleware } from "../../utils/fileUtils";
-
 import multer from "multer";
 import fs from "fs";
+import path from "path";
 import { convertFileName } from "../../utils/fileUtils";
 
 export const imgUploadRouter = express.Router();
 
+const toNumber = (value, fallback) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const uploadsRoot = path.join(process.cwd(), "uploads");
+const imagesDir = path.join(uploadsRoot, "images");
+const documentsDir = path.join(uploadsRoot, "documents");
+const filesDir = path.join(uploadsRoot, "files");
+
+const ensureDir = (dirPath) => async (req, res, next) => {
+  try {
+    await fs.promises.mkdir(dirPath, { recursive: true });
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+const maxImageUploadMb = toNumber(process.env.MAX_IMAGE_UPLOAD_MB, 10);
+const maxDocumentUploadMb = toNumber(process.env.MAX_DOCUMENT_UPLOAD_MB, 10);
+const maxDatasetUploadGb = toNumber(process.env.MAX_DATASET_UPLOAD_GB, 10);
+
 // config upload image
 let storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./uploads/images");
+    cb(null, imagesDir);
   },
   filename: function (req, file, cb) {
     let originalname = convertFileName(file.originalname);
@@ -27,41 +49,11 @@ function extFile(req, file, cb) {
   }
 }
 
-let uploadImage = multer({ storage: storage, fileFilter: extFile });
-function checkUploadPath(req, res, next) {
-  let path = "./uploads/images";
-  fs.exists(path, function (exists) {
-    if (exists) {
-      next();
-    } else {
-      fs.mkdir(path, function (err) {
-        if (err) {
-          console.log("Error in folder creation");
-          next();
-        }
-        next();
-      });
-    }
-  });
-}
-
-function checkUploadPathFolder(req, res, next) {
-  let path = "./uploads";
-  fs.exists(path, function (exists) {
-    if (exists) {
-      next();
-    } else {
-      fs.mkdir(path, function (err) {
-        if (err) {
-          console.log("Error in folder creation");
-          next();
-        }
-        next();
-      });
-    }
-  });
-}
-
+let uploadImage = multer({
+  storage: storage,
+  fileFilter: extFile,
+  limits: { fileSize: maxImageUploadMb * 1024 * 1024 },
+});
 imgUploadRouter.route("/hissync").get(imgUploadController.downloadFileHisSync);
 
 imgUploadRouter.route("/image/:imgNm").get(imgUploadController.getImageByName);
@@ -71,8 +63,7 @@ imgUploadRouter.route("/:imgNm").get(imgUploadController.getFileByName);
 imgUploadRouter
   .route("/")
   .post(
-    checkUploadPathFolder,
-    checkUploadPath,
+    ensureDir(imagesDir),
     uploadImage.single("image"),
     imgUploadController.uploadImages
   );
@@ -81,7 +72,7 @@ imgUploadRouter
 // config upload file
 let storageFiles = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./uploads/documents");
+    cb(null, documentsDir);
   },
   filename: function (req, file, cb) {
     let originalname = convertFileName(file.originalname);
@@ -97,33 +88,16 @@ function extFileFiles(req, file, cb) {
   }
 }
 
-function checkDocumentFileUploadPath(req, res, next) {
-  let path = "./uploads/documents";
-  fs.exists(path, function (exists) {
-    if (exists) {
-      next();
-    } else {
-      fs.mkdir(path, function (err) {
-        if (err) {
-          console.log("Error in folder creation");
-          next();
-        }
-        next();
-      });
-    }
-  });
-}
-
 let uploadDocumenteFile = multer({
   storage: storageFiles,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10GB
+  limits: { fileSize: maxDocumentUploadMb * 1024 * 1024 }, // MB
   fileFilter: extFileFiles,
 });
 
 imgUploadRouter
   .route("/upload-document")
   .post(
-    checkDocumentFileUploadPath,
+    ensureDir(documentsDir),
     uploadDocumenteFile.single("file"),
     imgUploadController.uploadDocumenteFile
   );
@@ -133,7 +107,7 @@ imgUploadRouter
 // Route for uploading large dataset files
 let largeFileStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./uploads/files");
+    cb(null, filesDir);
   },
   filename: function (req, file, cb) {
     let originalname = convertFileName(file.originalname);
@@ -141,33 +115,16 @@ let largeFileStorage = multer.diskStorage({
   },
 });
 
-function checkLargeFileUploadPath(req, res, next) {
-  let path = "./uploads/files";
-  fs.exists(path, function (exists) {
-    if (exists) {
-      next();
-    } else {
-      fs.mkdir(path, function (err) {
-        if (err) {
-          console.log("Error in folder creation");
-          next();
-        }
-        next();
-      });
-    }
-  });
-}
-
 let uploadLargeFile = multer({
   storage: largeFileStorage,
-  limits: { fileSize: 10 * 1024 * 1024 * 1024 }, // 10GB
+  limits: { fileSize: maxDatasetUploadGb * 1024 * 1024 * 1024 }, // GB
 });
 
 // Route for large file upload
 imgUploadRouter
   .route("/upload-file")
   .post(
-    checkLargeFileUploadPath,
+    ensureDir(filesDir),
     uploadLargeFile.single("file"),
     imgUploadController.uploadLargeFile
   );

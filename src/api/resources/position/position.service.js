@@ -1,5 +1,4 @@
 import Joi from "joi";
-import bcrypt from "bcryptjs";
 
 export default {
   validateCreate(body, method) {

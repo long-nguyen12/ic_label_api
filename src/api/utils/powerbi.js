@@ -13,8 +13,8 @@ const groupId = powerbi.groupId;
 const grant_type = "password";
 const resource = "https://analysis.windows.net/powerbi/api";
 const scope = "openid";
-const username = "dung@thinklabs.com.vn";
-const password = "TL@36Admin";
+const username = powerbi.username;
+const password = powerbi.password;
 const url_get_token = "https://login.microsoftonline.com/common/oauth2/token";
 const url = `https://api.powerbi.com/v1.0/myorg/groups/${groupId}/reports/${reportId}/generatetoken`
 

@@ -4,7 +4,6 @@ import path from "path";
 import File from "../files/file.model";
 import unzipper from "unzipper";
 import { createExtractorFromFile } from "node-unrar-js";
-const unrar = require("unrar");
 
 var sizeOf = require("image-size");
 const sharp = require("sharp");
@@ -12,15 +11,96 @@ const sharp = require("sharp");
 const osTempDir = require("os").tmpdir();
 const tempDir = osTempDir + "\\uploads";
 
+const moveFileSafe = async (sourcePath, targetDir) => {
+  const baseName = path.basename(sourcePath);
+  let targetPath = path.join(targetDir, baseName);
+  let counter = 1;
+
+  while (true) {
+    try {
+      await fs.promises.access(targetPath);
+      const parsed = path.parse(baseName);
+      targetPath = path.join(
+        targetDir,
+        `${parsed.name}_${counter}${parsed.ext}`
+      );
+      counter += 1;
+    } catch (err) {
+      break;
+    }
+  }
+
+  try {
+    await fs.promises.rename(sourcePath, targetPath);
+  } catch (err) {
+    if (err && err.code === "EXDEV") {
+      await fs.promises.copyFile(sourcePath, targetPath);
+      await fs.promises.unlink(sourcePath);
+    } else {
+      throw err;
+    }
+  }
+
+  return path.basename(targetPath);
+};
+
+const flattenExtractedFiles = async (rootDir) => {
+  const dirsToRemove = [];
+
+  const walk = async (currentDir) => {
+    const entries = await fs.promises.readdir(currentDir, {
+      withFileTypes: true,
+    });
+
+    for (const entry of entries) {
+      const fullPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(fullPath);
+        dirsToRemove.push(fullPath);
+      } else if (entry.isFile()) {
+        if (path.resolve(currentDir) !== path.resolve(rootDir)) {
+          await moveFileSafe(fullPath, rootDir);
+        }
+      }
+    }
+  };
+
+  await walk(rootDir);
+
+  for (const dirPath of dirsToRemove.reverse()) {
+    if (path.resolve(dirPath) !== path.resolve(rootDir)) {
+      await fs.promises.rm(dirPath, { recursive: true, force: true });
+    }
+  }
+};
+
 export default {
   async getFileByName(req, res) {
-    let fileNm = req.params.fileNm;
-    return res.sendFile(path.join(process.cwd(), "./uploads/files/" + fileNm));
+    const fileNm = path.basename(req.params.fileNm || "");
+    if (!fileNm) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid file name.",
+      });
+    }
+
+    return res.sendFile(fileNm, {
+      root: path.join(process.cwd(), "uploads", "files"),
+    });
   },
 
   async getImageByName(req, res) {
-    let imgNm = req.params.imgNm;
-    return res.sendFile(path.join(process.cwd(), "./uploads/images/" + imgNm));
+    const imgNm = path.basename(req.params.imgNm || "");
+    if (!imgNm) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid image name.",
+      });
+    }
+
+    return res.sendFile(imgNm, {
+      root: path.join(process.cwd(), "uploads", "images"),
+    });
   },
 
   findFileById(req, res) {
@@ -67,7 +147,12 @@ export default {
       let properties = sizeOf(pathOriginal);
       const imageHeight = properties.height;
       let fileNmStore = fileUtils.convertFileName(originalFilename);
-      let pathImageResize = "./uploads/images/" + fileNmStore;
+      let pathImageResize = path.join(
+        process.cwd(),
+        "uploads",
+        "images",
+        fileNmStore
+      );
 
       await sharp(pathOriginal)
         .rotate()
@@ -165,6 +250,7 @@ export default {
           .createReadStream(file.path)
           .pipe(unzipper.Extract({ path: extractPath }))
           .promise();
+        await flattenExtractedFiles(extractPath);
         return res.json({
           success: true,
           message: "Giải nén thành công!",
@@ -183,6 +269,7 @@ export default {
           const filePath = path.join(extractPath, file.fileHeader.name);
           await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
         }
+        await flattenExtractedFiles(extractPath);
         return res.json({
           success: true,
           message: "Giải nén thành công!",

@@ -1,6 +1,10 @@
+import crypto from "crypto";
+
 export function formatNumber(value) {
   return value?.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
 }
+
+const randomIndex = (max) => crypto.randomInt(0, max);
 
 export function generateStrongPassword(length = 12) {
   const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -10,15 +14,20 @@ export function generateStrongPassword(length = 12) {
   const all = upper + lower + digits + symbols;
 
   let password = [
-    upper[Math.floor(Math.random() * upper.length)],
-    symbols[Math.floor(Math.random() * symbols.length)],
-    lower[Math.floor(Math.random() * lower.length)],
-    digits[Math.floor(Math.random() * digits.length)],
+    upper[randomIndex(upper.length)],
+    symbols[randomIndex(symbols.length)],
+    lower[randomIndex(lower.length)],
+    digits[randomIndex(digits.length)],
   ];
 
   for (let i = password.length; i < length; i++) {
-    password.push(all[Math.floor(Math.random() * all.length)]);
+    password.push(all[randomIndex(all.length)]);
   }
 
-  return password.sort(() => Math.random() - 0.5).join("");
+  for (let i = password.length - 1; i > 0; i -= 1) {
+    const j = randomIndex(i + 1);
+    [password[i], password[j]] = [password[j], password[i]];
+  }
+
+  return password.join("");
 }

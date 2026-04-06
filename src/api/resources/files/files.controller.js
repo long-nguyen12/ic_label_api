@@ -3,8 +3,18 @@ import File from "./file.model";
 
 export default {
   async findFileById(req, res) {
-    let { id } = req.params;
-    return res.sendFile(path.join(process.cwd(), "./uploads/files/" + id));
+    const { id } = req.params;
+    const safeId = path.basename(id || "");
+    if (!safeId) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid file name.",
+      });
+    }
+
+    return res.sendFile(safeId, {
+      root: path.join(process.cwd(), "uploads", "files"),
+    });
   },
   async create(req, res) {
     try {
