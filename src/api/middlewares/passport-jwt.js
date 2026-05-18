@@ -25,7 +25,7 @@ export const configJWTStrategy = () => {
         return done(null, false);
       }
 
-      User.findOne({_id: payload._id, is_deleted: false}, {password: 0})
+      User.findOne({_id: payload._id, is_deleted: false}, {user_pass: 0})
         .populate({path: 'role_id', select: 'tenvaitro vaitro'}).lean()
         .exec(function (err, user) {
           if (err) {

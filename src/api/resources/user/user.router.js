@@ -72,6 +72,7 @@ userRouter.get(
 
 userRouter.put(
   "/:id/avatar",
+  passport.authenticate("jwt", { session: false }),
   checkTempFolder,
   multipartMiddleware,
   userController.updateAvatar
